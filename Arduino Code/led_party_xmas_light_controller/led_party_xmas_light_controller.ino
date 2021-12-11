@@ -42,7 +42,7 @@ void setup()
 
     rtc.RTCinit();
     if (!rtc.isClockSet())
-        rtc.setClock(1638143273);
+        rtc.setClock(1639266187);
     rtc.intOnSeconds(true);
     rtc.setAlarm(rtc.getClock() + 15);
     rtc.rtcInt(true);
@@ -87,7 +87,7 @@ void loop()
     if (rtc.availableINT())
     {
         rtc.clearAlarm();
-        digitalWrite(RELAY, HIGH);
+        //digitalWrite(RELAY, HIGH);
         Serial.println("Reley is set");
     }
 
