@@ -1,9 +1,9 @@
+#include "Adafruit_WS2801.h"
+#include "SPI.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <SPI.h>
 #include <Wire.h>
-#include "Adafruit_WS2801.h"
-#include "SPI.h"
 
 // My libs
 #include "defines.h"
@@ -11,6 +11,8 @@
 #include "io.h"
 #include "pcf85063.h"
 #include "pitches.h"
+#include "audio.h"
+#include "controller.h"
 
 
 // Constructors / objects
@@ -19,9 +21,10 @@ pcf85063 rtc;
 GUI gui;
 Adafruit_SSD1306 display(128, 32, &Wire, -1);
 Adafruit_WS2801 led1 = Adafruit_WS2801(30, WS1_DAT, WS1_CLK);
+audio myAudio;
+controller ctrl;
 
 int a = 0;
-int16_t maxLevel = 0;
 
 void setup()
 {
@@ -29,12 +32,13 @@ void setup()
     Wire.begin();
     led1.begin();
     led1.show();
+    myAudio.initAudio();
+    ctrl.init(&led1, NULL, NULL);
 
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
     display.clearDisplay();
     display.display();
     delay(100);
-
 
     rtc.RTCinit();
     if (!rtc.isClockSet())
@@ -47,6 +51,9 @@ void setup()
     io.configRotaryEnc();
 
     gui.init(&rtc, &display);
+
+    ctrl.setMode(LED_CTRL_MODE_PARTY_MUSIC_1);
+    ctrl.setLedColor(0b001111110000000000111111);
 }
 
 void loop()
@@ -84,73 +91,7 @@ void loop()
         Serial.println("Reley is set");
     }
 
-//------------------------------------------
-    int8_t adc[128];
-    for(int i = 0; i < 128; i++)
-    {
-        adc[i] = (analogRead(AUDIO_IN) >> 2) - 127;
-    }
-
-    for(int i = 0; i < 125; i++)
-    {
-        int32_t _movingAvg = 0;
-        for(int j = 0; j < 3; j++)
-        {
-            _movingAvg += adc[i + j];
-        }
-        _movingAvg /= 3;
-        adc[i] = abs(_movingAvg);
-    }
-
-    int16_t max = adc[0];
-    for(int i = 0; i < 125; i++)
-    {
-        if (adc[i] > max) max = adc[i];
-    }
-
-    max *= 2;
-
-    for(int i = 0; i < 30; i++)
-    {
-        led1.setPixelColor(i, 0);
-    }
-
-    if (max > maxLevel)
-    {
-        maxLevel = max;
-    }
-    else
-    {
-        if (maxLevel > 4) maxLevel-=4;
-    }
-
-    // Effect 1-------------------------
-    //int k = 30/127.0*maxLevel;
-    //for(int i = 0; i < k; i++)
-    //{
-    //    led1.setPixelColor(i, 0b111111111111111111111111);
-    //}
-    //led1.show();
-    // Effect 1-------------------------
-
-    // Effect 2-------------------------
-    //int k = 30/127.0*maxLevel/2;
-    //for(int i = 0; i < k; i++)
-    //{   
-    //    led1.setPixelColor(29 - i, 0b111111111111111111111111);
-    //    led1.setPixelColor(i, 0b111111111111111111111111);
-    //}
-    //led1.show();
-    // Effect 2-------------------------
-
-    // Effect 2-------------------------
-    int k = 30/127.0*maxLevel/2;
-    for(int i = 0; i < k; i++)
-    {   
-        led1.setPixelColor(14 - i, 0b111111111111111111111111);
-        led1.setPixelColor(15 + i, 0b111111111111111111111111);
-    }
-    led1.show();
-    // Effect 2-------------------------
-//------------------------------------------
+    ctrl.clearLeds(LED_CHANNEL_1);
+    myAudio.getAudio();
+    ctrl.reactLEDsToMusic(myAudio.getPeak(), LED_CHANNEL_1);
 }
