@@ -3,10 +3,28 @@
 
 #include "Adafruit_WS2801.h"
 #include "defines.h"
+#include "audio.h"
 
-#define LED_CTRL_MODE_STATIC        0
-#define LED_CTRL_MODE_XMAS_CYCLE    1
-#define LED_CTRL_MODE_PARTY_CYCLE   32
+#define LJUBICASTA 0
+#define NARANCASTA 1
+#define MODRO_PLAVA 2
+#define BIJELA 3
+#define ZELENA 4
+#define CRVENA 5
+#define ZUTA 6
+#define PLAVA 7
+#define ROZA  8
+
+#define LED_CTRL_MODE_STATIC_1      0
+#define LED_CTRL_MODE_STATIC_2      1
+#define LED_CTRL_MODE_XMAS_1        2
+#define LED_CTRL_MODE_XMAS_2        3
+#define LED_CTRL_MODE_XMAS_3        4
+#define LED_CTRL_MODE_XMAS_4        5
+#define LED_CTRL_MODE_PARTY_1       32
+#define LED_CTRL_MODE_PARTY_2       33
+#define LED_CTRL_MODE_PARTY_3       34
+#define LED_CTRL_MODE_PARTY_4       35
 #define LED_CTRL_MODE_PARTY_MUSIC_1 64
 #define LED_CTRL_MODE_PARTY_MUSIC_2 65
 #define LED_CTRL_MODE_PARTY_MUSIC_3 66
@@ -19,18 +37,38 @@ class controller
 {
   public:
     controller();
-    void init(Adafruit_WS2801 *_l1, Adafruit_WS2801 *_l2, Adafruit_WS2801 *_l3);
-    void setMode(uint8_t _mode);
+    void init(audio *_a, Adafruit_WS2801 *_l1, Adafruit_WS2801 *_l2, Adafruit_WS2801 *_l3);
+    void update(uint8_t _forced = 0);
+    void setMode(uint8_t _m, uint32_t _tm, uint16_t _tp);
+    uint8_t getMode();
     void setLedColor(uint32_t _c);
     void clearLeds(uint8_t _ledCh);
     void reactLEDsToMusic(int16_t _maxValue, uint8_t _ledCh);
+    uint32_t color24(byte r, byte g, byte b);
 
   private:
     Adafruit_WS2801 *_leds[3] = {NULL, NULL, NULL};
-    uint8_t ledMode = LED_CTRL_MODE_STATIC;
+    audio *_audioPtr = NULL;
     uint8_t songs = 0;
     uint8_t relayOut = 0;
     uint32_t ledColor = 0b000011110000111100001111;
+
+    const uint8_t red[9] = {128, 255, 0, 255, 32, 255, 255, 8, 255};
+    const uint8_t green[9] = {16, 64, 192, 128, 255, 2, 128, 8, 8};
+    const uint8_t blue[9] = {255, 0, 255, 128, 8, 2, 8, 255, 16};
+    const uint8_t oldColors[5][3] = {{red[CRVENA], green[CRVENA], blue[CRVENA]}, {red[NARANCASTA], green[NARANCASTA], blue[NARANCASTA]}, {red[PLAVA], green[PLAVA], blue[PLAVA]}, {red[ROZA], green[ROZA], blue[ROZA]}, {red[ZELENA], green[ZELENA], blue[ZELENA]}};
+
+    struct _currentMode
+    {
+      uint8_t _mode = LED_CTRL_MODE_STATIC_1;
+      uint8_t _makesSound = 0;
+      uint8_t _reactToSound = 0;
+      uint32_t _modeTimeout = 0;
+      unsigned long _modeTimestamp = 0;
+      uint16_t _patternChangeTimeout = 0;
+      unsigned long _patternTimestamp = 0;
+      uint8_t _patternSeq = 0;
+    }_mode;
 };
 
 #endif

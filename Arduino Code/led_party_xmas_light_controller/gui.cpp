@@ -5,25 +5,58 @@ GUI::GUI()
 
 }
 
-void GUI::init(pcf85063 *_r, Adafruit_SSD1306 *_o)
+void GUI::init(pcf85063 *_r, Adafruit_SSD1306 *_o, controller *_c)
 {
     _myRtc = _r;
     _myOled = _o;
+    _myCtrl = _c;
+    
+    mainScreen(_r->getClock());
 }
 
-void GUI::displayTime(uint8_t _flags, time_t _myEpoch)
+void GUI::mainScreen(time_t _myEpoch)
 {
     char temp[20] = {0};
     struct tm _tm = _myRtc->epochToHuman(_myEpoch);
-    if (_flags & GUI_RTC_TIME)
-    {
-        sprintf(temp, "%02d:%02d:%02d ", _tm.tm_hour, _tm.tm_min, _tm.tm_sec);
-        _myOled->print(temp);
-    }
+    sprintf(temp, "%02d:%02d:%02d %02d/%02d/%04d", _tm.tm_hour, _tm.tm_min, _tm.tm_sec, _tm.tm_mday, _tm.tm_mon + 1, _tm.tm_year + RTC_HUMAN_YEAR);
+    _myOled->print(temp);
     
-    if (_flags & GUI_RTC_DATE)
+    sprintf(temp, "Mode:%s", getModeName(_myCtrl->getMode()));
+    _myOled->setCursor(0, 8);
+    _myOled->print(temp);
+
+    sprintf(temp, "Dur:%dmin  Speed:%dsec", 10, 2);
+    _myOled->setCursor(0, 16);
+    _myOled->print(temp);
+}
+
+void GUI::resetMenu()
+{
+    _currentItem = 0;
+    _currentMode = 0;
+}
+
+char* GUI::getModeName(uint8_t _m)
+{
+    static char _s[20];
+    if (_m >= LED_CTRL_MODE_STATIC_1 && _m <= LED_CTRL_MODE_STATIC_2)
     {
-        sprintf(temp, "%02d/%02d/%04d", _tm.tm_mday, _tm.tm_mon + 1, _tm.tm_year + RTC_HUMAN_YEAR);
-        _myOled->print(temp);
+        sprintf(_s, "Xmas static %d", _m + 1);
     }
+
+    if (_m >= LED_CTRL_MODE_XMAS_1 && _m <= LED_CTRL_MODE_XMAS_4)
+    {
+        sprintf(_s, "Xmas dynam. %d", _m - LED_CTRL_MODE_XMAS_1 + 1);
+    }
+
+    if (_m >= LED_CTRL_MODE_PARTY_1 && _m <= LED_CTRL_MODE_PARTY_4)
+    {
+        sprintf(_s, "Party. %d", _m - LED_CTRL_MODE_PARTY_1 + 1);
+    }
+
+    if (_m >= LED_CTRL_MODE_PARTY_MUSIC_1 && _m <= LED_CTRL_MODE_PARTY_MUSIC_3)
+    {
+        sprintf(_s, "Party dynam. %d", _m - LED_CTRL_MODE_PARTY_MUSIC_1 + 1);
+    }
+    return _s;
 }

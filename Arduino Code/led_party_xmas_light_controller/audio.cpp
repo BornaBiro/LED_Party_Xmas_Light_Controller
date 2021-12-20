@@ -7,44 +7,64 @@ audio::audio()
 
 void audio::initAudio()
 {
-    memset(adc, 0, sizeof(adc));
+    memset(adcBuffer, 0, ADC_BUFFER_SIZE);
+    bufferTail = 0;
+    bufferHead = 0;
+    allowNextConversion = 1;
+    ADMUX = 0;
+    ADMUX |= 0b01000110; // ADC6
+
+    ADCSRA = 0;
+    ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADIF) | 0b00000111;
+
+    ADCSRB = 0;
 }
 
-void audio::getAudio()
+uint8_t audio::getAudio()
 {
-    for (int i = 0; i < 128; i++)
+    if (sampleCount() > 32)
     {
-        adc[i] = (analogRead(AUDIO_IN) >> 2) - 127;
-    }
-
-    for (int i = 0; i < 125; i++)
-    {
-        int32_t _movingAvg = 0;
-        for (int j = 0; j < 3; j++)
+        int8_t adc[120];
+        uint8_t samples = sampleCount();
+        for (int i = 0; i < samples; i++)
         {
-            _movingAvg += adc[i + j];
+            adc[i] = getSample();
         }
-        _movingAvg /= 3;
-        adc[i] = abs(_movingAvg);
-    }
 
-    int16_t max = adc[0];
-    for (int i = 0; i < 125; i++)
-    {
-        if (adc[i] > max)
-            max = adc[i];
-    }
+        for (int i = 0; i < samples - _movingAvgSamples; i++)
+        {
+            int32_t _movingAvg = 0;
+            for (int j = 0; j < _movingAvgSamples; j++)
+            {
+                _movingAvg += adc[i + j];
+            }
+            _movingAvg /= _movingAvgSamples;
+            adc[i] = abs(_movingAvg);
+        }
 
-    max *= 2;
+        int16_t max = adc[0];
+        for (int i = 0; i < samples - _movingAvgSamples; i++)
+        {
+            if (adc[i] > max)
+                max = adc[i];
+        }
 
-    if (max > maxLevel)
-    {
-        maxLevel = max;
+        max *= 2;
+
+        if (max > maxLevel)
+        {
+            maxLevel = max;
+        }
+        else
+        {
+            if (maxLevel > 1)
+                maxLevel -= 1;
+        }
+        return 1;
     }
     else
     {
-        if (maxLevel > 3)
-            maxLevel -= 3;
+        return 0;
     }
 }
 
@@ -55,7 +75,46 @@ int16_t audio::getPeak()
 
 void audio::resetAudio()
 {
-    memset(adc, 0, sizeof(adc));
-    maxLevel = 0;
-    k = 0;
+}
+
+void audio::pauseAudio()
+{
+    allowNextConversion = 0;
+}
+
+void audio::resumeAudio()
+{
+    allowNextConversion = 1;
+    ADCSRA |= (1 << ADSC);
+}
+
+int8_t audio::getSample()
+{
+    if (bufferHead == bufferTail)
+    {
+        return 0;
+    }
+    else
+    {
+        uint8_t c = adcBuffer[bufferTail];
+        bufferTail = (bufferTail + 1) % ADC_BUFFER_SIZE;
+        return c;
+    }
+}
+
+int audio::sampleCount()
+{
+    return ((unsigned int)(ADC_BUFFER_SIZE + bufferHead - bufferTail)) % ADC_BUFFER_SIZE;
+}
+
+ISR(ADC_vect)
+{
+    uint8_t i = (unsigned int)(bufferHead + 1) % ADC_BUFFER_SIZE;
+    if (i != bufferTail)
+    {
+        adcBuffer[bufferHead] = ADC - 511;
+        bufferHead = i;
+    }
+    if (allowNextConversion)
+        ADCSRA |= (1 << ADIF) | (1 << ADSC);
 }
