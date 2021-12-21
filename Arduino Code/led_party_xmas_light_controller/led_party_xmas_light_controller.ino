@@ -33,7 +33,7 @@ void setup()
 {
     Serial.begin(115200);
     Wire.begin();
-    myAudio.initAudio();
+    //myAudio.initAudio();
     ctrl.init(&myAudio, &led1, &led2, NULL);
 
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
@@ -54,8 +54,9 @@ void setup()
     gui.init(&rtc, &display, &ctrl);
 
     // ctrl.setMode(LED_CTRL_MODE_PARTY_MUSIC_2);
-    ctrl.setMode(LED_CTRL_MODE_STATIC_1, 10000, 500);
-    ctrl.setLedColor(0b001111110000000000111111);
+    //ctrl.setMode(LED_CTRL_MODE_STATIC_1, 20000, 500);
+    ctrl.setMode(LED_CTRL_MODE_STATIC_1, 120000, 400);
+    //ctrl.setLedColor(0b001111110000000000111111);
 }
 
 void loop()
@@ -63,26 +64,23 @@ void loop()
     if (io.rotaryEncAvaialble())
     {
         io.getRotaryEnc(&a);
+        gui.displayOn();
+        gui.update();
         Serial.println(a, DEC);
     }
 
     if (io.getRotaryEncSW())
     {
         Serial.println("ENC SW pressed");
+        gui.displayOn();
+        gui.update();
     }
 
-    // if (io.getButton1())
-    //{
-    //    Serial.println("BTN1 pressed");
-    //}
-
-    if (rtc.available())
+    if (io.getButton1())
     {
-        display.clearDisplay();
-        display.setTextColor(WHITE, BLACK);
-        display.setCursor(0, 0);
-        gui.mainScreen(rtc.getClock());
-        display.display();
+        Serial.println("BTN1 pressed");
+        gui.displayOn();
+        gui.update();
     }
 
     if (rtc.availableINT())
@@ -99,5 +97,6 @@ void loop()
     //    myAudio.resumeAudio();
     //}
 
+    gui.update();
     ctrl.update();
 }

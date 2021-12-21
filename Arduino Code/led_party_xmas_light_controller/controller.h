@@ -17,10 +17,13 @@
 
 #define LED_CTRL_MODE_STATIC_1      0
 #define LED_CTRL_MODE_STATIC_2      1
-#define LED_CTRL_MODE_XMAS_1        2
-#define LED_CTRL_MODE_XMAS_2        3
-#define LED_CTRL_MODE_XMAS_3        4
-#define LED_CTRL_MODE_XMAS_4        5
+#define LED_CTRL_MODE_STATIC_3      2
+#define LED_CTRL_MODE_STATIC_4      3
+#define LED_CTRL_MODE_XMAS_1        4
+#define LED_CTRL_MODE_XMAS_2        5
+#define LED_CTRL_MODE_XMAS_3        6
+#define LED_CTRL_MODE_XMAS_4        7
+#define LED_CTRL_MODE_XMAS_5        8
 #define LED_CTRL_MODE_PARTY_1       32
 #define LED_CTRL_MODE_PARTY_2       33
 #define LED_CTRL_MODE_PARTY_3       34
@@ -45,6 +48,7 @@ class controller
     void clearLeds(uint8_t _ledCh);
     void reactLEDsToMusic(int16_t _maxValue, uint8_t _ledCh);
     uint32_t color24(byte r, byte g, byte b);
+    uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 
   private:
     Adafruit_WS2801 *_leds[3] = {NULL, NULL, NULL};
