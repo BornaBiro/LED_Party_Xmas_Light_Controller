@@ -5,12 +5,12 @@
 #include "Arduino.h"
 #include "defines.h"
 
-#define ADC_BUFFER_SIZE            64
+#define ADC_BUFFER_SIZE            128
 
 static volatile uint8_t allowNextConversion = 0;
-static volatile uint8_t adcBuffer[ADC_BUFFER_SIZE];
-static volatile uint16_t bufferTail = 0;
-static volatile uint16_t bufferHead = 0;
+static volatile int8_t adcBuffer[ADC_BUFFER_SIZE];
+static volatile uint8_t bufferTail = 0;
+static volatile uint8_t bufferHead = 0;
 
 class audio
 {
@@ -28,7 +28,7 @@ class audio
 
   private:
   int16_t maxLevel = 0;
-  const uint8_t _movingAvgSamples = 7;
+  const uint8_t _movingAvgSamples = 1;
 };
 
 #endif
