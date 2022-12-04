@@ -136,8 +136,8 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             _menuCursor = 0;
             settings.animationDelay += _enc;
             if (settings.animationDelay > 600)
-                settings.animationDelay = 0;
-            if (settings.animationDelay < 0)
+                settings.animationDelay = 1;
+            if (settings.animationDelay < 1)
                 settings.animationDelay = 600;
         }
         updateNeeded = 1;
@@ -156,8 +156,8 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             _menuCursor = 0;
             settings.animationDuration += _enc;
             if (settings.animationDuration > 600)
-                settings.animationDuration = 0;
-            if (settings.animationDuration < 0)
+                settings.animationDuration = 1;
+            if (settings.animationDuration < 1)
                 settings.animationDuration = 600;
         }
         updateNeeded = 1;
@@ -268,31 +268,31 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             {
                 settings.activationTimes[_currentSetting / 5].hoursOn += _enc;
                 checkLimits(0, 23, &(settings.activationTimes[_currentSetting / 5].hoursOn));
-                _menuCursor = 2;
+                _menuCursor = 1;
             }
             if (_currentSetting % 5 == 1)
             {
                 settings.activationTimes[_currentSetting / 5].minutesOn += _enc;
                 checkLimits(0, 59, &(settings.activationTimes[_currentSetting / 5].minutesOn));
-                _menuCursor = 5;
+                _menuCursor = 4;
             }
             if (_currentSetting % 5 == 2)
             {
                 settings.activationTimes[_currentSetting / 5].hoursOff += _enc;
                 checkLimits(0, 23, &(settings.activationTimes[_currentSetting / 5].hoursOff));
-                _menuCursor = 8;
+                _menuCursor = 7;
             }
             if (_currentSetting % 5 == 3)
             {
                 settings.activationTimes[_currentSetting / 5].minutesOff += _enc;
                 checkLimits(0, 59, &(settings.activationTimes[_currentSetting / 5].minutesOff));
-                _menuCursor = 11;
+                _menuCursor = 10;
             }
             if (_currentSetting % 5 == 4)
             {
                 settings.activationTimes[_currentSetting / 5].isEnabled += _enc;
                 settings.activationTimes[_currentSetting / 5].isEnabled &= 1;
-                _menuCursor = 14;
+                _menuCursor = 13;
             }
         }
         updateNeeded = 1;
@@ -337,19 +337,13 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
         break;
     }
     case 3: {
-        lcd.print("Animation delay");
-        lcd.setCursor(1, 1);
-        lcd.print(settings.animationDelay / 10.0);
-        lcd.print('s');
-        drawItemSelector(lcd, _menuCursor);
+        sprintf(lcdBuffer, "%d.%01d sec", settings.animationDelay / 10, abs(settings.animationDelay % 10));
+        drawSetting(lcd, "Animation delay", lcdBuffer, 1, _menuCursor);
         break;
     }
     case 4: {
-        lcd.print("Animation dur.");
-        lcd.setCursor(1, 1);
-        lcd.print(settings.animationDuration);
-        lcd.print('s');
-        drawItemSelector(lcd, _menuCursor);
+        sprintf(lcdBuffer, "%d sec", settings.animationDuration);
+        drawSetting(lcd, "Animation dur.", lcdBuffer, 1, _menuCursor);
         break;
     }
     case 5: {
@@ -367,20 +361,14 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
         break;
     }
     case 7: {
-        lcd.print("Auto start");
-        lcd.setCursor(1, 1);
-        sprintf_P(lcdBuffer, "LED:%4s RLY:%4s", _autoSettingStr[settings.autoStartLeds], _autoSettingStr[settings.autoStartRelay]);
-        lcd.print(lcdBuffer);
-        drawItemSelector(lcd, _menuCursor);
+        sprintf(lcdBuffer, "LED:%4s RLY:%4s", _autoSettingStr[settings.autoStartLeds], _autoSettingStr[settings.autoStartRelay]);
+        drawSetting(lcd, "Auto start", lcdBuffer, 1, _menuCursor);
         break;
     }
     case 8: {
         struct tm _myTime = rtc.epochToHuman(rtc.getClock());
-        lcd.print("Set time");
-        lcd.setCursor(1, 1);
         sprintf(lcdBuffer, "%02d:%02d", _myTime.tm_hour, _myTime.tm_min);
-        lcd.print(lcdBuffer);
-        drawItemSelector(lcd, _menuCursor);
+        drawSetting(lcd, "Set time", lcdBuffer, 1, _menuCursor);
         break;
     }
     case 9: {
@@ -393,15 +381,12 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
         {
             _selectedTimer = 0;
         }
-
-        lcd.print("Activation time");
-        lcd.setCursor(1, 1);
-        sprintf(lcdBuffer, "%d %02d:%02d-%02d:%02d %d", (unsigned int)(_selectedTimer) + 1,
+        sprintf(lcdBuffer, "%d %02d:%02d-%02d:%02d %c", (unsigned int)(_selectedTimer) + 1,
                 settings.activationTimes[_selectedTimer].hoursOn, settings.activationTimes[_selectedTimer].minutesOn,
                 settings.activationTimes[_selectedTimer].hoursOff, settings.activationTimes[_selectedTimer].minutesOff,
-                settings.activationTimes[_selectedTimer].isEnabled);
-        lcd.print(lcdBuffer);
-        drawItemSelector(lcd, _menuCursor);
+                settings.activationTimes[_selectedTimer].isEnabled?'Y':'N');
+
+        drawSetting(lcd, "Activation time", lcdBuffer, 0, _menuCursor);
         break;
     }
     default: {
@@ -430,6 +415,7 @@ void GUI::displayOn(LiquidCrystal_I2C &lcd)
     if (!_lcdOn)
     {
         _lcdOn = 1;
+        lcd.clear();
         lcd.backlight();
         lcd.display();
     }
@@ -478,6 +464,10 @@ void GUI::checkLimits(int8_t _min, int8_t _max, int8_t *_var)
         *_var = _max;
 }
 
-void GUI::drawSetting(LiquidCrystal_I2C &lcd, char *_title, char *_setting)
+void GUI::drawSetting(LiquidCrystal_I2C &lcd, char *_title, char *_setting, int _startPosition, int _menuPosition)
 {
+    lcd.print(_title);
+    lcd.setCursor(_startPosition, 1);
+    lcd.print(_setting);
+    drawItemSelector(lcd, _menuPosition);
 }

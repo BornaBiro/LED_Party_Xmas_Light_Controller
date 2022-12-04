@@ -21,12 +21,13 @@ class GUI
 
     private:
     controller *_myCtrl = NULL;
-    struct deviceSettings settings;
 
     void drawItemSelector(LiquidCrystal_I2C &lcd, int8_t _pos);
-    void drawSetting(LiquidCrystal_I2C &lcd, char *_title, char *_setting);
+    void drawSetting(LiquidCrystal_I2C &lcd, char *_title, char *_setting, int _startPosition, int _menuPosition);
     void checkLimits(int8_t _min, int8_t _max, int8_t *_var);
 
+    struct deviceSettings settings;
+    const char *_autoSettingStr[3] = {"Off", "On", "Auto"};
     char lcdBuffer[20];
     unsigned long _lcdTimeout = 0;
     uint8_t _lcdOn = 1;
@@ -34,7 +35,6 @@ class GUI
     int8_t _currentMenu = 0;
     uint8_t updateNeeded = 0;
     int8_t _menuCursor = -1;
-    const char *_autoSettingStr[3] = {"Off", "On", "Auto"};
 };
 
 #endif
