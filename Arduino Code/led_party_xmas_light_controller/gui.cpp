@@ -9,18 +9,37 @@ void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
     // Copy the conntroller object pointer. -> TODO: Use references!
     _myCtrl = _ctrl;
 
-    // Set default settings (TODO: get everything from the EEPROM)
-    settings.currentSetting = 0; // Xmas mode
-    settings.currentMode = _ctrl->getMode();
-    settings.animationDelay = 5; // 500ms
-    settings.autoChange = 1;
-    settings.melody = 0;
-    settings.autoStartLeds = 0;
-    settings.autoStartRelay = 0;
-    settings.animationDuration = 30;
-    settings.activationTimes[0] = {0, 0, 0, 0, 0};
-    settings.activationTimes[1] = {0, 0, 0, 0, 0};
-    settings.activationTimes[2] = {0, 0, 0, 0, 0};
+    if (restoreSettings(&settings) == 0)
+    {
+        // Set default settings (TODO: get everything from the EEPROM)
+        settings.currentSetting = 0; // Xmas mode
+        settings.currentMode = 0;
+        settings.animationDelay = 5; // 500ms
+        settings.autoChange = 1;
+        settings.melody = 0;
+        settings.autoStartLeds = 0;
+        settings.autoStartRelay = 0;
+        settings.animationDuration = 30;
+        settings.activationTimes[0] = {0, 0, 0, 0, 0};
+        settings.activationTimes[1] = {0, 0, 0, 0, 0};
+        settings.activationTimes[2] = {0, 0, 0, 0, 0};
+
+        // Save settings to EEPROM
+        EEPROM.put(GUI_EEPROM_ADDR_MODE, settings.currentMode);
+        EEPROM.put(GUI_EEPROM_ADDR_ANIM_DELAY, settings.animationDelay);
+        EEPROM.put(GUI_EEPROM_ADDR_ANIM_DUR, settings.animationDuration);
+        EEPROM.put(GUI_EEPROM_ADDR_AUTO_CHANGE, settings.autoChange);
+        EEPROM.put(GUI_EEPROM_ADDR_MELODY_EN, settings.melody);
+        EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_LED, settings.autoStartLeds);
+        EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_RLY, settings.autoStartRelay);
+        EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME1, settings.activationTimes[0]);
+        EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME2, settings.activationTimes[1]);
+        EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME3, settings.activationTimes[2]);
+
+        // Write down EEPROM KEY
+        uint8_t _key = GUI_EEPROM_ADDR_SECRET_KEY;
+        EEPROM.put(GUI_EEPROM_ADDR_MODE, _key);
+    }
 
     // Show the main screen.
     mainScreen(lcd, rtc, rtc.getClock());
@@ -28,13 +47,20 @@ void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
 
 void GUI::update(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
 {
+    // Save the status of the RTC.
+    uint8_t _rtcTick = rtc.available();
+
+    // Check if the state of the LEDs or relay output needs to be changed.
+    if (_rtcTick)
+        checkActiveTime(rtc);
+
     // If the LCD is off, there is no need for updating it.
     if (!_lcdOn)
         return;
 
     // Main menu only needs to be updated if no menu is selected and if there is update on the time or forced updated is
     // requested.
-    if (!_currentItem && !_currentMenu && (rtc.available() || updateNeeded))
+    if (!_currentItem && !_currentMenu && (_rtcTick || updateNeeded))
     {
         // Update the main screen.
         mainScreen(lcd, rtc, rtc.getClock());
@@ -139,6 +165,8 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
                 settings.animationDelay = 1;
             if (settings.animationDelay < 1)
                 settings.animationDelay = 600;
+
+            EEPROM.put(GUI_EEPROM_ADDR_ANIM_DELAY, settings.animationDelay);
         }
         updateNeeded = 1;
         break;
@@ -159,6 +187,8 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
                 settings.animationDuration = 1;
             if (settings.animationDuration < 1)
                 settings.animationDuration = 600;
+
+            EEPROM.put(GUI_EEPROM_ADDR_ANIM_DUR, settings.animationDuration);
         }
         updateNeeded = 1;
         break;
@@ -175,6 +205,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             _menuCursor = 0;
             settings.autoChange += _enc;
             settings.autoChange &= 1;
+            EEPROM.put(GUI_EEPROM_ADDR_AUTO_CHANGE, settings.autoChange);
         }
         updateNeeded = 1;
         break;
@@ -192,6 +223,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             _menuCursor = 0;
             settings.melody += _enc;
             settings.melody &= 1;
+            EEPROM.put(GUI_EEPROM_ADDR_MELODY_EN, settings.melody);
         }
         updateNeeded = 1;
         break;
@@ -206,19 +238,28 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
 
         if (_currentItem == 1)
         {
+            _menuCursor = 0;
             settings.autoStartLeds += _enc;
             checkLimits(0, 2, &(settings.autoStartLeds));
+            EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_LED, settings.autoStartLeds);
             updateNeeded = 1;
-            _menuCursor = 0;
             // LED controller needs to be updated.
         }
 
         if (_currentItem == 2)
         {
+            _menuCursor = 9;
             settings.autoStartRelay += _enc;
             checkLimits(0, 2, &(settings.autoStartRelay));
+
+            if (settings.autoStartRelay < 2)
+            {
+                digitalWrite(RELAY, settings.autoStartRelay & 1);
+                _relayState = settings.autoStartRelay & 1;
+            }
+
+            EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_RLY, settings.autoStartRelay);
             updateNeeded = 1;
-            _menuCursor = 9;
             // Relay controller needs to be updated.
         }
         break;
@@ -268,30 +309,40 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             {
                 settings.activationTimes[_currentSetting / 5].hoursOn += _enc;
                 checkLimits(0, 23, &(settings.activationTimes[_currentSetting / 5].hoursOn));
+                EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME1 + ((_currentSetting / 5) * 5),
+                           settings.activationTimes[_currentSetting / 5]);
                 _menuCursor = 1;
             }
             if (_currentSetting % 5 == 1)
             {
                 settings.activationTimes[_currentSetting / 5].minutesOn += _enc;
                 checkLimits(0, 59, &(settings.activationTimes[_currentSetting / 5].minutesOn));
+                EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME1 + ((_currentSetting / 5) * 5),
+                           settings.activationTimes[_currentSetting / 5]);
                 _menuCursor = 4;
             }
             if (_currentSetting % 5 == 2)
             {
                 settings.activationTimes[_currentSetting / 5].hoursOff += _enc;
                 checkLimits(0, 23, &(settings.activationTimes[_currentSetting / 5].hoursOff));
+                EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME1 + ((_currentSetting / 5) * 5),
+                           settings.activationTimes[_currentSetting / 5]);
                 _menuCursor = 7;
             }
             if (_currentSetting % 5 == 3)
             {
                 settings.activationTimes[_currentSetting / 5].minutesOff += _enc;
                 checkLimits(0, 59, &(settings.activationTimes[_currentSetting / 5].minutesOff));
+                EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME1 + ((_currentSetting / 5) * 5),
+                           settings.activationTimes[_currentSetting / 5]);
                 _menuCursor = 10;
             }
             if (_currentSetting % 5 == 4)
             {
                 settings.activationTimes[_currentSetting / 5].isEnabled += _enc;
                 settings.activationTimes[_currentSetting / 5].isEnabled &= 1;
+                EEPROM.put(GUI_EEPROM_ADDR_AUTOTIME1 + ((_currentSetting / 5) * 5),
+                           settings.activationTimes[_currentSetting / 5]);
                 _menuCursor = 13;
             }
         }
@@ -361,7 +412,8 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
         break;
     }
     case 7: {
-        sprintf(lcdBuffer, "LED:%4s RLY:%4s", _autoSettingStr[settings.autoStartLeds], _autoSettingStr[settings.autoStartRelay]);
+        sprintf(lcdBuffer, "L:%4s S:%4s", _autoSettingStr[settings.autoStartLeds],
+                _autoSettingStr[settings.autoStartRelay]);
         drawSetting(lcd, "Auto start", lcdBuffer, 1, _menuCursor);
         break;
     }
@@ -384,7 +436,7 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
         sprintf(lcdBuffer, "%d %02d:%02d-%02d:%02d %c", (unsigned int)(_selectedTimer) + 1,
                 settings.activationTimes[_selectedTimer].hoursOn, settings.activationTimes[_selectedTimer].minutesOn,
                 settings.activationTimes[_selectedTimer].hoursOff, settings.activationTimes[_selectedTimer].minutesOff,
-                settings.activationTimes[_selectedTimer].isEnabled?'Y':'N');
+                settings.activationTimes[_selectedTimer].isEnabled ? 'Y' : 'N');
 
         drawSetting(lcd, "Activation time", lcdBuffer, 0, _menuCursor);
         break;
@@ -463,6 +515,93 @@ void GUI::checkLimits(int8_t _min, int8_t _max, int8_t *_var)
     if (*_var < _min)
         *_var = _max;
 }
+
+void GUI::checkActiveTime(pcf85063 &rtc)
+{
+    struct tm _currentTime = rtc.epochToHuman(rtc.getClock());
+    uint8_t relayOn = 0;
+
+
+    for (int i = 0; i < 3; i++)
+    {
+        if ((settings.activationTimes[i].hoursOn != settings.activationTimes[i].hoursOff) ||
+            (settings.activationTimes[i].minutesOn != settings.activationTimes[i].minutesOff))
+        {
+            // "Shift" the time at the start of the current day to avoid issues with turn off time in the next day (aka.
+            // day overlap issue). First, convert everytinh into minutes
+            int minutesConvOn = (settings.activationTimes[i].hoursOn * 60) + settings.activationTimes[i].minutesOn;
+            int minutesConvOff = (settings.activationTimes[i].hoursOff * 60) + settings.activationTimes[i].minutesOff;
+            int minutesConvCurrent = (_currentTime.tm_hour * 60) + _currentTime.tm_min;
+
+            // Shift everything so that "0 minutes" on timeline is onTime (or minutesConvOn)
+            int16_t offTimeHours = ((minutesConvOff - minutesConvOn) + 1440) % 1440;
+            int16_t currentHours = ((minutesConvCurrent - minutesConvOn) + 1440) % 1440;
+            int16_t onTimeHours = 0;
+
+            // Check wheater relay needs to be turned off or on.
+            if (currentHours >= onTimeHours && currentHours <= offTimeHours && settings.activationTimes[i].isEnabled)
+            {
+                if (settings.autoStartRelay == 2)
+                {
+                    relayOn = 1;
+                }
+            }
+
+            // if (currentHours >= offTimeHours && currentHours >= onTimeHours && settings.activationTimes[i].isEnabled
+            // && settings.autoStartRelay == 2)
+            // {
+            //     if (_relayState)
+            //     {
+            //         digitalWrite(RELAY, LOW);
+            //         _relayState = 0;
+            //     }
+            // }
+        }
+    }
+
+    // If the flag is set, that means the relay needs to be turned on
+    if (relayOn)
+    {
+        // Check if the relay is not already on
+        if (!_relayState)
+        {
+            _relayState = 1;
+            digitalWrite(RELAY, HIGH);
+        }
+    }
+    else
+    {
+        // If relay do not need to be turned on, keep it off. But first check if the relay is not already off.
+        if (_relayState)
+        {
+            _relayState = 0;
+            digitalWrite(RELAY, LOW);
+        }
+    }
+}
+
+int GUI::restoreSettings(deviceSettings *_s)
+{
+    // First check the key (for the EEPROM data validity). If the key is not correct, return and use default settings.
+    uint8_t _key;
+    EEPROM.get(GUI_EEPROM_ADDR_MODE, _key);
+    if (_key != GUI_EEPROM_ADDR_SECRET_KEY)
+        return 0;
+
+    EEPROM.get(GUI_EEPROM_ADDR_MODE, (_s->currentMode));
+    EEPROM.get(GUI_EEPROM_ADDR_ANIM_DELAY, (_s->animationDelay));
+    EEPROM.get(GUI_EEPROM_ADDR_ANIM_DUR, (_s->animationDuration));
+    EEPROM.get(GUI_EEPROM_ADDR_AUTO_CHANGE, (_s->autoChange));
+    EEPROM.get(GUI_EEPROM_ADDR_MELODY_EN, (_s->melody));
+    EEPROM.get(GUI_EEPROM_ADDR_AUTOSTART_LED, (_s->autoStartLeds));
+    EEPROM.get(GUI_EEPROM_ADDR_AUTOSTART_RLY, (_s->autoStartRelay));
+    EEPROM.get(GUI_EEPROM_ADDR_AUTOTIME1, (_s->activationTimes[0]));
+    EEPROM.get(GUI_EEPROM_ADDR_AUTOTIME2, (_s->activationTimes[1]));
+    EEPROM.get(GUI_EEPROM_ADDR_AUTOTIME3, (_s->activationTimes[2]));
+
+    return 1;
+}
+
 
 void GUI::drawSetting(LiquidCrystal_I2C &lcd, char *_title, char *_setting, int _startPosition, int _menuPosition)
 {

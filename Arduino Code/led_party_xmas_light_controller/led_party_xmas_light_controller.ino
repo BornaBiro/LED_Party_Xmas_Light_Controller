@@ -4,6 +4,7 @@
 #include "LiquidCrystal_I2C.h"
 #include <SPI.h>
 #include <Wire.h>
+#include <EEPROM.h>
 
 // My libs
 #include "audio.h"
@@ -18,7 +19,7 @@
 // Constructors / objects
 Adafruit_WS2801 led1 = Adafruit_WS2801(30, WS1_DAT, WS1_CLK);
 Adafruit_WS2801 led2 = Adafruit_WS2801(20, WS2_DAT, WS2_CLK);
-LiquidCrystal_I2C lcd(0x3f, 16, 2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 IO io;
 pcf85063 rtc;
 GUI gui;
@@ -47,7 +48,7 @@ void setup()
     rtc.rtcInt(true);
 
     io.configPins();
-    io.configRotaryEnc();
+    io.configRotaryEnc();    
 
     gui.init(lcd, rtc, &ctrl);
 
@@ -70,16 +71,8 @@ void loop()
         io.getRotaryEnc(&encoder);
         gui.updateMenu(encoder, encoderButton, 0, rtc);
         gui.displayOn(lcd);
-        //gui.settingsScreen(lcd, rtc);
         tone(BUZZER_PIN, BUZZER_CLICK_FREQ, BUZZER_CLICK_LEN);
     }
-
-    // if (rtc.availableINT())
-    // {
-    //     rtc.clearAlarm();
-    //     // digitalWrite(RELAY, HIGH);
-    //     Serial.println("Reley is set");
-    // }
 
     if (myAudio.getAudio())
     {

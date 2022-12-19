@@ -1,6 +1,8 @@
 #ifndef __CONTROLLER_H__
 #define __CONTROLLER_H__
 
+#include <EEPROM.h>
+
 #include "Adafruit_WS2801.h"
 #include "defines.h"
 #include "audio.h"
@@ -28,9 +30,9 @@
 #define LED_CTRL_MODE_PARTY_2       33
 #define LED_CTRL_MODE_PARTY_3       34
 #define LED_CTRL_MODE_PARTY_4       35
-#define LED_CTRL_MODE_PARTY_MUSIC_1 64
-#define LED_CTRL_MODE_PARTY_MUSIC_2 65
-#define LED_CTRL_MODE_PARTY_MUSIC_3 66
+#define LED_CTRL_MODE_PARTY_MUSIC_1 36
+#define LED_CTRL_MODE_PARTY_MUSIC_2 37
+#define LED_CTRL_MODE_PARTY_MUSIC_3 38
 
 #define LED_CHANNEL_1 0
 #define LED_CHANNEL_2 1
@@ -53,8 +55,6 @@ class controller
   private:
     Adafruit_WS2801 *_leds[3] = {NULL, NULL, NULL};
     audio *_audioPtr = NULL;
-    uint8_t songs = 0;
-    uint8_t relayOut = 0;
     uint32_t ledColor = 0b000011110000111100001111;
 
     const uint8_t red[9] = {128, 255, 0, 255, 32, 255, 255, 8, 255};
