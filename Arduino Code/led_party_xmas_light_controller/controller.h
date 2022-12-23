@@ -25,7 +25,8 @@
 #define LED_CTRL_MODE_XMAS_2        5
 #define LED_CTRL_MODE_XMAS_3        6
 #define LED_CTRL_MODE_XMAS_4        7
-#define LED_CTRL_MODE_XMAS_5        8
+#define LED_CTRL_MODE_LAST_MODE     LED_CTRL_MODE_XMAS_4
+
 #define LED_CTRL_MODE_PARTY_1       32
 #define LED_CTRL_MODE_PARTY_2       33
 #define LED_CTRL_MODE_PARTY_3       34
@@ -44,10 +45,14 @@ class controller
     controller();
     void init(audio *_a, Adafruit_WS2801 *_l1, Adafruit_WS2801 *_l2, Adafruit_WS2801 *_l3);
     void update(uint8_t _forced = 0);
-    void setMode(uint8_t _m, uint32_t _tm, uint16_t _tp);
+    void setMode(int16_t _m, uint32_t _tm, uint16_t _tp);
     uint8_t getMode();
+    void setAnimationDelay(uint16_t _tp);
     void setLedColor(uint32_t _c);
-    void clearLeds(uint8_t _ledCh);
+    void clearLeds();
+    void setState(uint8_t _enable);
+    uint8_t getState();
+    void setAutoChange(uint8_t _autoChange);
     void reactLEDsToMusic(int16_t _maxValue, uint8_t _ledCh);
     uint32_t color24(byte r, byte g, byte b);
     uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
@@ -65,13 +70,13 @@ class controller
     struct _currentMode
     {
       uint8_t _mode = LED_CTRL_MODE_STATIC_1;
-      uint8_t _makesSound = 0;
-      uint8_t _reactToSound = 0;
       uint32_t _modeTimeout = 0;
       unsigned long _modeTimestamp = 0;
       uint16_t _patternChangeTimeout = 0;
       unsigned long _patternTimestamp = 0;
       uint8_t _patternSeq = 0;
+      uint8_t _enabled = 0;
+      uint8_t _autoChange = 1;
     }_mode;
 };
 

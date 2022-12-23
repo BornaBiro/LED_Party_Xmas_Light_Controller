@@ -33,7 +33,7 @@ class GUI
     uint8_t updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc);
     void displayOff(LiquidCrystal_I2C &lcd);
     void displayOn(LiquidCrystal_I2C &lcd);
-    char* getModeName(uint8_t _m);
+    char* getModeName(uint8_t _m, char *_s);
 
     private:
     controller *_myCtrl = NULL;

@@ -40,6 +40,10 @@ void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
         uint8_t _key = GUI_EEPROM_ADDR_SECRET_KEY;
         EEPROM.put(GUI_EEPROM_ADDR_MODE, _key);
     }
+    // Set-up an LED controller.
+    _myCtrl->setState(settings.autoStartLeds & 1);
+    _myCtrl->setMode(LED_CTRL_MODE_STATIC_1, settings.animationDuration * 1000, settings.animationDelay * 10);
+    _myCtrl->setAutoChange(settings.autoChange);
 
     // Show the main screen.
     mainScreen(lcd, rtc, rtc.getClock());
@@ -95,7 +99,7 @@ void GUI::mainScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc, time_t _myEpoch)
 
     // Write the selected mode.
     lcd.setCursor(0, 1);
-    lcd.print(getModeName(_myCtrl->getMode()));
+    lcd.print(getModeName(_myCtrl->getMode(), lcdBuffer));
 }
 
 uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
@@ -145,8 +149,18 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
     }
 
     case 2: {
-        _currentItem = 0;
-        _menuCursor = -1;
+        if (_currentItem > 1)
+        {
+            _currentItem = 0;
+            _menuCursor = -1;
+        }
+
+        if (_currentItem == 1)
+        {
+            _menuCursor = 0;
+            _myCtrl->setMode(_myCtrl->getMode() + _enc, settings.animationDuration * 1000, settings.animationDelay * 10);
+        }
+        updateNeeded = 1;
         break;
     }
 
@@ -167,6 +181,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
                 settings.animationDelay = 600;
 
             EEPROM.put(GUI_EEPROM_ADDR_ANIM_DELAY, settings.animationDelay);
+            _myCtrl->setAnimationDelay(settings.animationDelay * 10);
         }
         updateNeeded = 1;
         break;
@@ -183,12 +198,13 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
         {
             _menuCursor = 0;
             settings.animationDuration += _enc;
-            if (settings.animationDuration > 600)
+            if (settings.animationDuration > 500)
                 settings.animationDuration = 1;
             if (settings.animationDuration < 1)
-                settings.animationDuration = 600;
+                settings.animationDuration = 500;
 
             EEPROM.put(GUI_EEPROM_ADDR_ANIM_DUR, settings.animationDuration);
+            _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
         }
         updateNeeded = 1;
         break;
@@ -206,6 +222,8 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             settings.autoChange += _enc;
             settings.autoChange &= 1;
             EEPROM.put(GUI_EEPROM_ADDR_AUTO_CHANGE, settings.autoChange);
+            _myCtrl->setAutoChange(settings.autoChange);
+            if (settings.autoChange) _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
         }
         updateNeeded = 1;
         break;
@@ -243,7 +261,20 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             checkLimits(0, 2, &(settings.autoStartLeds));
             EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_LED, settings.autoStartLeds);
             updateNeeded = 1;
-            // LED controller needs to be updated.
+
+            _myCtrl->setState(settings.autoStartLeds);
+            if (!settings.autoStartLeds)
+            {
+                _myCtrl->clearLeds();
+            }
+            if (settings.autoStartLeds == 1)
+            {
+                _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
+            }
+            // if (settings.autoStartLeds == 2)
+            // {
+            //     checkActiveTime(rtc);
+            // }
         }
 
         if (_currentItem == 2)
@@ -257,10 +288,13 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
                 digitalWrite(RELAY, settings.autoStartRelay & 1);
                 _relayState = settings.autoStartRelay & 1;
             }
+            // else
+            // {
+            //     checkActiveTime(rtc);
+            // }
 
             EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_RLY, settings.autoStartRelay);
             updateNeeded = 1;
-            // Relay controller needs to be updated.
         }
         break;
     }
@@ -380,15 +414,18 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
     switch (_currentMenu)
     {
     case 1: {
-        lcd.print("Current setting");
+        lcd.print("Current mode");
+        lcd.setCursor(0, 1);
+        lcd.print("Xmas");
         break;
     }
     case 2: {
-        lcd.print("Current mode");
+        getModeName(_myCtrl->getMode(), lcdBuffer);
+        drawSetting(lcd, "Current setting", lcdBuffer, 1, _menuCursor);
         break;
     }
     case 3: {
-        sprintf(lcdBuffer, "%d.%01d sec", settings.animationDelay / 10, abs(settings.animationDelay % 10));
+        sprintf(lcdBuffer, "%4d msec", settings.animationDelay * 10);
         drawSetting(lcd, "Animation delay", lcdBuffer, 1, _menuCursor);
         break;
     }
@@ -473,15 +510,14 @@ void GUI::displayOn(LiquidCrystal_I2C &lcd)
     }
 }
 
-char *GUI::getModeName(uint8_t _m)
+char *GUI::getModeName(uint8_t _m, char *_s)
 {
-    static char _s[20];
     if (_m >= LED_CTRL_MODE_STATIC_1 && _m <= LED_CTRL_MODE_STATIC_4)
     {
         sprintf(_s, "Xmas static %d", _m + 1);
     }
 
-    if (_m >= LED_CTRL_MODE_XMAS_1 && _m <= LED_CTRL_MODE_XMAS_5)
+    if (_m >= LED_CTRL_MODE_XMAS_1 && _m <= LED_CTRL_MODE_XMAS_4)
     {
         sprintf(_s, "Xmas dynam. %d", _m - LED_CTRL_MODE_XMAS_1 + 1);
     }
@@ -520,6 +556,7 @@ void GUI::checkActiveTime(pcf85063 &rtc)
 {
     struct tm _currentTime = rtc.epochToHuman(rtc.getClock());
     uint8_t relayOn = 0;
+    uint8_t ledsOn = 0;
 
 
     for (int i = 0; i < 3; i++)
@@ -538,44 +575,58 @@ void GUI::checkActiveTime(pcf85063 &rtc)
             int16_t currentHours = ((minutesConvCurrent - minutesConvOn) + 1440) % 1440;
             int16_t onTimeHours = 0;
 
-            // Check wheater relay needs to be turned off or on.
+            // Check wheater relay or LEDs need to be turned off or on.
             if (currentHours >= onTimeHours && currentHours <= offTimeHours && settings.activationTimes[i].isEnabled)
             {
-                if (settings.autoStartRelay == 2)
-                {
-                    relayOn = 1;
-                }
+                relayOn = 1;
+                ledsOn = 1;
             }
-
-            // if (currentHours >= offTimeHours && currentHours >= onTimeHours && settings.activationTimes[i].isEnabled
-            // && settings.autoStartRelay == 2)
-            // {
-            //     if (_relayState)
-            //     {
-            //         digitalWrite(RELAY, LOW);
-            //         _relayState = 0;
-            //     }
-            // }
         }
     }
 
     // If the flag is set, that means the relay needs to be turned on
-    if (relayOn)
+    if (settings.autoStartRelay == 2)
     {
-        // Check if the relay is not already on
-        if (!_relayState)
+        if (relayOn)
         {
-            _relayState = 1;
-            digitalWrite(RELAY, HIGH);
+            // Check if the relay is not already on
+            if (!_relayState)
+            {
+                _relayState = 1;
+                digitalWrite(RELAY, HIGH);
+            }
+        }
+        else
+        {
+            // If relay do not need to be turned on, keep it off. But first check if the relay is not already off.
+            if (_relayState)
+            {
+                _relayState = 0;
+                digitalWrite(RELAY, LOW);
+            }
         }
     }
-    else
+
+    // Same goes for the LEDs
+    if (settings.autoStartLeds == 2)
     {
-        // If relay do not need to be turned on, keep it off. But first check if the relay is not already off.
-        if (_relayState)
+        if (ledsOn)
         {
-            _relayState = 0;
-            digitalWrite(RELAY, LOW);
+            // Check if the relay is not already on
+            if (!_myCtrl->getState())
+            {
+                _myCtrl->setState(1);
+                _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
+            }
+        }
+        else
+        {
+            // If relay do not need to be turned on, keep it off. But first check if the relay is not already off.
+            if (_myCtrl->getState())
+            {
+                _myCtrl->setState(0);
+                _myCtrl->clearLeds();
+            }
         }
     }
 }

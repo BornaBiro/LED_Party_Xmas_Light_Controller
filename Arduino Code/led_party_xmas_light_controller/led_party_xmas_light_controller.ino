@@ -36,8 +36,7 @@ void setup()
 
     lcd.begin();
     lcd.clear();
-
-    myAudio.initAudio();
+    
     ctrl.init(&myAudio, &led1, &led2, NULL);
 
     rtc.RTCinit();
@@ -53,11 +52,6 @@ void setup()
     gui.init(lcd, rtc, &ctrl);
 
     sei();
-
-    ctrl.setMode(LED_CTRL_MODE_PARTY_MUSIC_1, 20000, 500);
-    // ctrl.setMode(LED_CTRL_MODE_STATIC_1, 20000, 500);
-    // ctrl.setMode(LED_CTRL_MODE_STATIC_1, 120000, 400);
-    // ctrl.setLedColor(0b001111110000000000111111);
 }
 
 void loop()
@@ -74,13 +68,13 @@ void loop()
         tone(BUZZER_PIN, BUZZER_CLICK_FREQ, BUZZER_CLICK_LEN);
     }
 
-    if (myAudio.getAudio())
-    {
+    //if (myAudio.getAudio())
+    //{
         // myAudio.pauseAudio();
-        ctrl.reactLEDsToMusic(myAudio.getPeak(), LED_CHANNEL_1);
+    //    ctrl.reactLEDsToMusic(myAudio.getPeak(), LED_CHANNEL_1);
         // myAudio.resumeAudio();
-    }
+    //}
 
     gui.update(lcd, rtc);
-    // ctrl.update();
+    ctrl.update();
 }

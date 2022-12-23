@@ -23,13 +23,20 @@ void controller::init(audio *_a, Adafruit_WS2801 *_l1, Adafruit_WS2801 *_l2, Ada
 
 void controller::update(uint8_t _forced)
 {
+    // If the LEDs are disabled, do not update the LED contoller
+    if (!_mode._enabled) return;
+
     // Check if you sholud change mode
     if (((unsigned long)(millis() - _mode._modeTimestamp) > _mode._modeTimeout) && !_forced)
     {
-        _mode._mode++;
-        if (_mode._mode > LED_CTRL_MODE_XMAS_4)
-            _mode._mode = 0; // remove this later!!!! DO NOT FORGET TO DO THAT!
-        setMode(_mode._mode, _mode._modeTimeout, _mode._patternChangeTimeout);
+        if (_mode._autoChange)
+        {
+            _mode._mode++;
+            if (_mode._mode > LED_CTRL_MODE_LAST_MODE)
+                _mode._mode = LED_CTRL_MODE_STATIC_1;
+            
+            setMode(_mode._mode, _mode._modeTimeout, _mode._patternChangeTimeout);
+        }
     }
 
     if (_mode._mode == LED_CTRL_MODE_STATIC_1 && _forced)
@@ -38,7 +45,7 @@ void controller::update(uint8_t _forced)
         {
             if (_leds[i] != NULL)
             {
-                randomSeed(analogRead(0));
+                randomSeed(_audioPtr->getSample());
                 for (int j = 0; j < (_leds[i]->numPixels()); j++)
                 {
                     uint8_t c = random(0, 7);
@@ -85,7 +92,7 @@ void controller::update(uint8_t _forced)
         {
             if (_leds[i] != NULL)
             {
-                randomSeed(analogRead(0));
+                randomSeed(_audioPtr->getSample());
                 for (int j = 0; j < (_leds[i]->numPixels()); j++)
                 {
                     _leds[i]->setPixelColor(
@@ -205,8 +212,12 @@ void controller::update(uint8_t _forced)
         }
     }
 }
-void controller::setMode(uint8_t _m, uint32_t _tm, uint16_t _tp)
+void controller::setMode(int16_t _m, uint32_t _tm, uint16_t _tp)
 {
+    // Do not allow wrong modes
+    if (_m > LED_CTRL_MODE_LAST_MODE) _m = LED_CTRL_MODE_STATIC_1;
+    if (_m < LED_CTRL_MODE_STATIC_1) _m = LED_CTRL_MODE_LAST_MODE;
+
     _mode._mode = _m;
     _mode._modeTimestamp = millis();
     _mode._patternTimestamp = millis();
@@ -221,20 +232,45 @@ uint8_t controller::getMode()
     return _mode._mode;
 }
 
+void controller::setAnimationDelay(uint16_t _tp)
+{
+    _mode._patternTimestamp = millis();
+    _mode._patternChangeTimeout = _tp;
+}
+
 void controller::setLedColor(uint32_t _c)
 {
     ledColor = _c;
 }
 
-void controller::clearLeds(uint8_t _ledCh)
+void controller::clearLeds()
 {
-    if (_leds[_ledCh] == NULL)
-        return;
-
-    for (int i = 0; i < _leds[_ledCh]->numPixels(); i++)
+    for (int j = 0; j < 3; j++)
     {
-        _leds[_ledCh]->setPixelColor(i, 0);
+        if (_leds[j] != NULL)
+        {
+            for (int i = 0; i < _leds[j]->numPixels(); i++)
+            {
+                _leds[j]->setPixelColor(i, 0);
+            }
+        }
+        _leds[j]->show();
     }
+}
+
+void controller::setState(uint8_t _enable)
+{
+    _mode._enabled = _enable;
+}
+
+uint8_t controller::getState()
+{
+    return _mode._enabled;
+}
+
+void controller::setAutoChange(uint8_t _autoChange)
+{
+    _mode._autoChange = _autoChange;
 }
 
 void controller::reactLEDsToMusic(int16_t _maxValue, uint8_t _ledCh)
