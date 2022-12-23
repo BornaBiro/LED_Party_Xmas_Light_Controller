@@ -7,7 +7,7 @@ IO::IO()
 
 uint8_t IO::configPins()
 {
-    pinMode(BUZZER, OUTPUT);
+    pinMode(BUZZER_PIN, OUTPUT);
     pinMode(ENC_A, INPUT);
     pinMode(ENC_B, INPUT);
     pinMode(ENC_SW, INPUT);

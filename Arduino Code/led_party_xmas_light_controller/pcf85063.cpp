@@ -68,7 +68,7 @@ time_t pcf85063::getClock()
     _myTime.tm_hour = bcd2dec(regData[2]  & 0x7f);
     _myTime.tm_mday = bcd2dec(regData[3]  & 0x3f);
     _myTime.tm_wday = bcd2dec(regData[4]  & 0x07);
-    _myTime.tm_mon = bcd2dec(regData[5]  & 0x1f);
+    _myTime.tm_mon = bcd2dec(regData[5] & 0x1f) - 1;
     _myTime.tm_year = bcd2dec(regData[6]) + 2000 - RTC_HUMAN_YEAR; // 1870 instead of 1900 because of stupid offsets
 
     //char tmp[50];
@@ -90,7 +90,7 @@ void pcf85063::setClock(time_t _epoch)
     regData[3] = dec2bcd(_myTime.tm_hour);
     regData[4] = dec2bcd(_myTime.tm_mday);
     regData[5] = _myTime.tm_wday;
-    regData[6] = dec2bcd(_myTime.tm_mon);
+    regData[6] = dec2bcd(_myTime.tm_mon + 1);
     regData[7] = dec2bcd((_myTime.tm_year + RTC_HUMAN_YEAR) % 100); // 1870 instead of 1900 because of stupid offsets
     writeRegisters(PCF85063_RAMBYTE, regData, sizeof(regData));
 }

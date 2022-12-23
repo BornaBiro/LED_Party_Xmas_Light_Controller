@@ -1,11 +1,10 @@
 #define __AVR__
 
 #include "Adafruit_WS2801.h"
-#include "SPI.h"
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include "LiquidCrystal_I2C.h"
 #include <SPI.h>
 #include <Wire.h>
+#include <EEPROM.h>
 
 // My libs
 #include "audio.h"
@@ -18,28 +17,28 @@
 
 
 // Constructors / objects
+Adafruit_WS2801 led1 = Adafruit_WS2801(30, WS1_DAT, WS1_CLK);
+Adafruit_WS2801 led2 = Adafruit_WS2801(20, WS2_DAT, WS2_CLK);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 IO io;
 pcf85063 rtc;
 GUI gui;
-Adafruit_SSD1306 display(128, 32, &Wire, -1);
-Adafruit_WS2801 led1 = Adafruit_WS2801(30, WS1_DAT, WS1_CLK);
-Adafruit_WS2801 led2 = Adafruit_WS2801(20, WS2_DAT, WS2_CLK);
 audio myAudio;
 controller ctrl;
 
-int a = 0;
-
 void setup()
 {
+    // make a tone, so we know that device is alive.
+    tone(BUZZER_PIN, BUZZER_CLICK_FREQ, BUZZER_LONG_LEN);
     Serial.begin(115200);
     Wire.begin();
-    //myAudio.initAudio();
-    ctrl.init(&myAudio, &led1, &led2, NULL);
+    Wire.setWireTimeout(25000, true);
 
-    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-    display.clearDisplay();
-    display.display();
-    delay(100);
+    lcd.begin();
+    lcd.clear();
+
+    myAudio.initAudio();
+    ctrl.init(&myAudio, &led1, &led2, NULL);
 
     rtc.RTCinit();
     if (!rtc.isClockSet())
@@ -49,54 +48,34 @@ void setup()
     rtc.rtcInt(true);
 
     io.configPins();
-    io.configRotaryEnc();
+    io.configRotaryEnc();    
 
-    gui.init(&rtc, &display, &ctrl);
+    gui.init(lcd, rtc, &ctrl);
 
-    // ctrl.setMode(LED_CTRL_MODE_PARTY_MUSIC_2);
-    //ctrl.setMode(LED_CTRL_MODE_STATIC_1, 20000, 500);
-    ctrl.setMode(LED_CTRL_MODE_STATIC_1, 120000, 400);
-    //ctrl.setLedColor(0b001111110000000000111111);
+    sei();
 }
 
 void loop()
 {
-    if (io.rotaryEncAvaialble())
-    {
-        io.getRotaryEnc(&a);
-        gui.displayOn();
-        gui.update();
-        Serial.println(a, DEC);
-    }
+    int encoder = 0;
+    int encoderButton = 0;
 
-    if (io.getRotaryEncSW())
+    encoderButton = io.getRotaryEncSW();
+    if (io.rotaryEncAvaialble() || encoderButton)
     {
-        Serial.println("ENC SW pressed");
-        gui.displayOn();
-        gui.update();
-    }
-
-    if (io.getButton1())
-    {
-        Serial.println("BTN1 pressed");
-        gui.displayOn();
-        gui.update();
-    }
-
-    if (rtc.availableINT())
-    {
-        rtc.clearAlarm();
-        // digitalWrite(RELAY, HIGH);
-        Serial.println("Reley is set");
+        io.getRotaryEnc(&encoder);
+        gui.updateMenu(encoder, encoderButton, 0, rtc);
+        gui.displayOn(lcd);
+        if (!ctrl.getCurrentMelody()) tone(BUZZER_PIN, BUZZER_CLICK_FREQ, BUZZER_CLICK_LEN);
     }
 
     //if (myAudio.getAudio())
     //{
-    //    myAudio.pauseAudio();
+        // myAudio.pauseAudio();
     //    ctrl.reactLEDsToMusic(myAudio.getPeak(), LED_CHANNEL_1);
-    //    myAudio.resumeAudio();
+        // myAudio.resumeAudio();
     //}
 
-    gui.update();
+    gui.update(lcd, rtc);
     ctrl.update();
 }

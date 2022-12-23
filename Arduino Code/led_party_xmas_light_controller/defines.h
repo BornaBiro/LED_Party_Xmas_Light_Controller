@@ -1,3 +1,6 @@
+#ifndef __DEFINES_H__
+#define __DEFINES_H__
+
 // Select only one of these two
 #define USE_RELAY_OUTPUT
 //#define USE_WS3_OUTPUT
@@ -7,7 +10,10 @@
 #endif
 
 // Sound
-#define BUZZER   A3
+#define BUZZER_PIN          A3
+#define BUZZER_CLICK_LEN    10UL
+#define BUZZER_LONG_LEN     250UL
+#define BUZZER_CLICK_FREQ   2500UL
 #define AUDIO_IN A6
 
 // Lights
@@ -32,3 +38,30 @@
 #define SD_CS      10
 #define RTC_INT    8  // It's also PCINT0
 #define RTC_CLKOUT 9  // It's also PCINT1
+
+struct timerTime
+{
+    int8_t hoursOn;
+    int8_t minutesOn;
+    int8_t hoursOff;
+    int8_t minutesOff;
+    int8_t isEnabled;
+};
+
+struct deviceSettings
+{
+    int8_t currentSetting;
+    int8_t currentMode;
+    int16_t animationDelay;
+    int8_t autoChange;
+    int8_t melody;
+    int8_t autoStartLeds;
+    int8_t autoStartRelay;
+    int16_t animationDuration;
+    struct timerTime activationTimes[3];
+};
+
+const char stringEnabled[] = "Enabled";
+const char stringDisabled[] = "Disabled";
+
+#endif

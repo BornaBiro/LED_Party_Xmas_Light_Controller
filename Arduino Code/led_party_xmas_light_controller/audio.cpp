@@ -10,21 +10,22 @@ void audio::initAudio()
     memset(adcBuffer, 0, ADC_BUFFER_SIZE);
     bufferTail = 0;
     bufferHead = 0;
-    allowNextConversion = 1;
     ADMUX = 0;
     ADMUX |= 0b01000110; // ADC6
 
     ADCSRA = 0;
-    ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADIE) | (1 << ADIF) | 0b00000111;
+    ADCSRA |= (1 << ADEN) | (1 << ADIE) | (1 << ADIF) | (1 << ADATE) | 0b00000110;
 
     ADCSRB = 0;
+
+    ADCSRA |= (1 << ADSC);
 }
 
 uint8_t audio::getAudio()
 {
-    if (sampleCount() > 32)
+    if (sampleCount() > 100)
     {
-        int8_t adc[120];
+        int8_t adc[128];
         uint8_t samples = sampleCount();
         for (int i = 0; i < samples; i++)
         {
@@ -96,7 +97,7 @@ int8_t audio::getSample()
     }
     else
     {
-        uint8_t c = adcBuffer[bufferTail];
+        int8_t c = adcBuffer[bufferTail];
         bufferTail = (bufferTail + 1) % ADC_BUFFER_SIZE;
         return c;
     }
@@ -104,17 +105,16 @@ int8_t audio::getSample()
 
 int audio::sampleCount()
 {
-    return ((unsigned int)(ADC_BUFFER_SIZE + bufferHead - bufferTail)) % ADC_BUFFER_SIZE;
+    return ((uint8_t)(ADC_BUFFER_SIZE + bufferHead - bufferTail)) % ADC_BUFFER_SIZE;
 }
 
 ISR(ADC_vect)
 {
-    uint8_t i = (unsigned int)(bufferHead + 1) % ADC_BUFFER_SIZE;
+    int16_t _result = ADC;
+    uint8_t i = (uint8_t)(bufferHead + 1) % ADC_BUFFER_SIZE;
     if (i != bufferTail)
     {
-        adcBuffer[bufferHead] = ADC - 511;
+        adcBuffer[bufferHead] = (_result - 511) >> 2;
         bufferHead = i;
     }
-    if (allowNextConversion)
-        ADCSRA |= (1 << ADIF) | (1 << ADSC);
 }
