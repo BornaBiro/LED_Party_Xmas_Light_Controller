@@ -249,6 +249,9 @@ void controller::update(uint8_t _forced)
             {
                 _mode._patternSeq = 0;
                 _mode._currentMelody++;
+                
+                _mode._patternChangeTimeout = 500;
+                noTone(BUZZER_PIN);
 
                 if (_mode._currentMelody > 8) _mode._currentMelody = 0;
             }
