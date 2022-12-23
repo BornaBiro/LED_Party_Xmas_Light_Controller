@@ -42,7 +42,7 @@ void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
     }
     // Set-up an LED controller.
     _myCtrl->setState(settings.autoStartLeds & 1);
-    _myCtrl->setMode(LED_CTRL_MODE_STATIC_1, settings.animationDuration * 1000, settings.animationDelay * 10);
+    _myCtrl->setMode(LED_CTRL_MODE_STATIC_1, (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
     _myCtrl->setAutoChange(settings.autoChange);
     _myCtrl->setMelody(settings.melody);
 
@@ -159,7 +159,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
         if (_currentItem == 1)
         {
             _menuCursor = 0;
-            _myCtrl->setMode(_myCtrl->getMode() + _enc, settings.animationDuration * 1000, settings.animationDelay * 10);
+            _myCtrl->setMode(_myCtrl->getMode() + _enc, (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
         }
         updateNeeded = 1;
         break;
@@ -205,7 +205,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
                 settings.animationDuration = 500;
 
             EEPROM.put(GUI_EEPROM_ADDR_ANIM_DUR, settings.animationDuration);
-            _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
+            _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
         }
         updateNeeded = 1;
         break;
@@ -224,7 +224,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             settings.autoChange &= 1;
             EEPROM.put(GUI_EEPROM_ADDR_AUTO_CHANGE, settings.autoChange);
             _myCtrl->setAutoChange(settings.autoChange);
-            if (settings.autoChange) _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
+            if (settings.autoChange) _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
         }
         updateNeeded = 1;
         break;
@@ -271,7 +271,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             }
             if (settings.autoStartLeds == 1)
             {
-                _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
+                _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
             }
             // if (settings.autoStartLeds == 2)
             // {
@@ -618,7 +618,7 @@ void GUI::checkActiveTime(pcf85063 &rtc)
             if (!_myCtrl->getState())
             {
                 _myCtrl->setState(1);
-                _myCtrl->setMode(_myCtrl->getMode(), settings.animationDuration * 1000, settings.animationDelay * 10);
+                _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
             }
         }
         else

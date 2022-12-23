@@ -47,7 +47,7 @@ class controller
     controller();
     void init(audio *_a, Adafruit_WS2801 *_l1, Adafruit_WS2801 *_l2, Adafruit_WS2801 *_l3);
     void update(uint8_t _forced = 0);
-    void setMode(int16_t _m, uint32_t _tm, uint16_t _tp);
+    void setMode(int16_t _m, unsigned long _tm, unsigned long _tp);
     uint8_t getMode();
     void setAnimationDelay(uint16_t _tp);
     void setLedColor(uint32_t _c);
@@ -74,9 +74,9 @@ class controller
     struct _currentMode
     {
       uint8_t _mode = LED_CTRL_MODE_STATIC_1;
-      uint32_t _modeTimeout = 0;
+      unsigned long _modeTimeout = 0;
       unsigned long _modeTimestamp = 0;
-      uint16_t _patternChangeTimeout = 0;
+      unsigned long _patternChangeTimeout = 0;
       unsigned long _patternTimestamp = 0;
       uint8_t _patternSeq = 0;
       uint8_t _enabled = 0;

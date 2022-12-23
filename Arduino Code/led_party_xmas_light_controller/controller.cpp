@@ -258,7 +258,7 @@ void controller::update(uint8_t _forced)
         }
     }
 }
-void controller::setMode(int16_t _m, uint32_t _tm, uint16_t _tp)
+void controller::setMode(int16_t _m, unsigned long _tm, unsigned long _tp)
 {
     // Do not allow wrong modes
     if (_m > LED_CTRL_MODE_LAST_MODE) _m = LED_CTRL_MODE_STATIC_1;
