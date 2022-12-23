@@ -36,7 +36,8 @@ void setup()
 
     lcd.begin();
     lcd.clear();
-    
+
+    myAudio.initAudio();
     ctrl.init(&myAudio, &led1, &led2, NULL);
 
     rtc.RTCinit();
@@ -65,7 +66,7 @@ void loop()
         io.getRotaryEnc(&encoder);
         gui.updateMenu(encoder, encoderButton, 0, rtc);
         gui.displayOn(lcd);
-        tone(BUZZER_PIN, BUZZER_CLICK_FREQ, BUZZER_CLICK_LEN);
+        if (!ctrl.getCurrentMelody()) tone(BUZZER_PIN, BUZZER_CLICK_FREQ, BUZZER_CLICK_LEN);
     }
 
     //if (myAudio.getAudio())

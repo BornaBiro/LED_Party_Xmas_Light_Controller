@@ -211,6 +211,49 @@ void controller::update(uint8_t _forced)
             _mode._patternSeq+=4;
         }
     }
+
+    // This mode has music!
+    if (_mode._mode == LED_CTRL_MODE_XMAS_5)
+    {
+        if (((unsigned long)(millis() - _mode._patternTimestamp) > _mode._patternChangeTimeout) || _forced)
+        {
+            _mode._patternTimestamp = millis();
+
+            if (!_mode._currentMelody) _mode._currentMelody = 1;
+
+            if (_mode._melody) tone(BUZZER_PIN, pgm_read_word(currentMelodyNotes[_mode._currentMelody - 1] + _mode._patternSeq));
+            _mode._patternChangeTimeout = pgm_read_word(currentMelodyDurations[_mode._currentMelody - 1] + _mode._patternSeq);
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (_leds[i] != NULL)
+                {
+                    for (int j = 0; j < (_leds[i]->numPixels()); j += 2)
+                    {
+                        if (_mode._patternSeq % 2)
+                        {
+                            _leds[i]->setPixelColor(j, color24(255, 0, 0));
+                            _leds[i]->setPixelColor(j + 1, color24(0, 255, 0));
+                        }
+                        else
+                        {
+                            _leds[i]->setPixelColor(j, color24(0, 255, 0));
+                            _leds[i]->setPixelColor(j + 1, color24(255, 0, 0));
+                        }
+                    }
+                    _leds[i]->show();
+                }
+            }
+            _mode._patternSeq++;
+            if (_mode._patternSeq > pgm_read_byte(&melodyElements[_mode._currentMelody - 1]))
+            {
+                _mode._patternSeq = 0;
+                _mode._currentMelody++;
+
+                if (_mode._currentMelody > 8) _mode._currentMelody = 0;
+            }
+        }
+    }
 }
 void controller::setMode(int16_t _m, uint32_t _tm, uint16_t _tp)
 {
@@ -224,6 +267,8 @@ void controller::setMode(int16_t _m, uint32_t _tm, uint16_t _tp)
     _mode._patternSeq = 0;
     _mode._modeTimeout = _tm;
     _mode._patternChangeTimeout = _tp;
+    _mode._currentMelody = 0;
+    noTone(BUZZER_PIN);
     update(1);
 }
 
@@ -271,6 +316,16 @@ uint8_t controller::getState()
 void controller::setAutoChange(uint8_t _autoChange)
 {
     _mode._autoChange = _autoChange;
+}
+
+void controller::setMelody(uint8_t _melody)
+{
+    _mode._melody = _melody;
+}
+
+uint8_t controller::getCurrentMelody()
+{
+    return _mode._currentMelody;
 }
 
 void controller::reactLEDsToMusic(int16_t _maxValue, uint8_t _ledCh)

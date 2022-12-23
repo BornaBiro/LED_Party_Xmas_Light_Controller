@@ -6,6 +6,7 @@
 #include "Adafruit_WS2801.h"
 #include "defines.h"
 #include "audio.h"
+#include "melodies.h"
 
 #define LJUBICASTA 0
 #define NARANCASTA 1
@@ -25,7 +26,8 @@
 #define LED_CTRL_MODE_XMAS_2        5
 #define LED_CTRL_MODE_XMAS_3        6
 #define LED_CTRL_MODE_XMAS_4        7
-#define LED_CTRL_MODE_LAST_MODE     LED_CTRL_MODE_XMAS_4
+#define LED_CTRL_MODE_XMAS_5        8
+#define LED_CTRL_MODE_LAST_MODE     LED_CTRL_MODE_XMAS_5
 
 #define LED_CTRL_MODE_PARTY_1       32
 #define LED_CTRL_MODE_PARTY_2       33
@@ -53,6 +55,8 @@ class controller
     void setState(uint8_t _enable);
     uint8_t getState();
     void setAutoChange(uint8_t _autoChange);
+    void setMelody(uint8_t _melody);
+    uint8_t getCurrentMelody();
     void reactLEDsToMusic(int16_t _maxValue, uint8_t _ledCh);
     uint32_t color24(byte r, byte g, byte b);
     uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
@@ -77,6 +81,8 @@ class controller
       uint8_t _patternSeq = 0;
       uint8_t _enabled = 0;
       uint8_t _autoChange = 1;
+      uint8_t _melody = 0;
+      uint8_t _currentMelody = 0;
     }_mode;
 };
 

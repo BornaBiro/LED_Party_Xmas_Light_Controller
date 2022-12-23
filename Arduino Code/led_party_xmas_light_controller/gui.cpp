@@ -44,6 +44,7 @@ void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
     _myCtrl->setState(settings.autoStartLeds & 1);
     _myCtrl->setMode(LED_CTRL_MODE_STATIC_1, settings.animationDuration * 1000, settings.animationDelay * 10);
     _myCtrl->setAutoChange(settings.autoChange);
+    _myCtrl->setMelody(settings.melody);
 
     // Show the main screen.
     mainScreen(lcd, rtc, rtc.getClock());
@@ -242,6 +243,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             settings.melody += _enc;
             settings.melody &= 1;
             EEPROM.put(GUI_EEPROM_ADDR_MELODY_EN, settings.melody);
+            _myCtrl->setMelody(settings.melody);
         }
         updateNeeded = 1;
         break;
@@ -517,7 +519,7 @@ char *GUI::getModeName(uint8_t _m, char *_s)
         sprintf(_s, "Xmas static %d", _m + 1);
     }
 
-    if (_m >= LED_CTRL_MODE_XMAS_1 && _m <= LED_CTRL_MODE_XMAS_4)
+    if (_m >= LED_CTRL_MODE_XMAS_1 && _m <= LED_CTRL_MODE_XMAS_5)
     {
         sprintf(_s, "Xmas dynam. %d", _m - LED_CTRL_MODE_XMAS_1 + 1);
     }
