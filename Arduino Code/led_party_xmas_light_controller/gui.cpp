@@ -524,7 +524,7 @@ char *GUI::getModeName(uint8_t _m, char *_s)
         sprintf(_s, "Xmas dynam. %d", _m - LED_CTRL_MODE_XMAS_1 + 1);
     }
 
-    if (_m >= LED_CTRL_MODE_PARTY_1 && _m <= LED_CTRL_MODE_PARTY_4)
+    if (_m >= LED_CTRL_MODE_PARTY_1 && _m <= LED_CTRL_MODE_PARTY_2)
     {
         sprintf(_s, "Party. %d", _m - LED_CTRL_MODE_PARTY_1 + 1);
     }

@@ -53,6 +53,8 @@ void setup()
     gui.init(lcd, rtc, &ctrl);
 
     sei();
+
+    ctrl.setMode(LED_CTRL_MODE_PARTY_2, 8000, 50);
 }
 
 void loop()

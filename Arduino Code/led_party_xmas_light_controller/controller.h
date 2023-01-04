@@ -27,15 +27,14 @@
 #define LED_CTRL_MODE_XMAS_3        6
 #define LED_CTRL_MODE_XMAS_4        7
 #define LED_CTRL_MODE_XMAS_5        8
-#define LED_CTRL_MODE_LAST_MODE     LED_CTRL_MODE_XMAS_5
 
 #define LED_CTRL_MODE_PARTY_1       32
 #define LED_CTRL_MODE_PARTY_2       33
-#define LED_CTRL_MODE_PARTY_3       34
-#define LED_CTRL_MODE_PARTY_4       35
-#define LED_CTRL_MODE_PARTY_MUSIC_1 36
-#define LED_CTRL_MODE_PARTY_MUSIC_2 37
-#define LED_CTRL_MODE_PARTY_MUSIC_3 38
+#define LED_CTRL_MODE_PARTY_MUSIC_1 34
+#define LED_CTRL_MODE_PARTY_MUSIC_2 35
+#define LED_CTRL_MODE_PARTY_MUSIC_3 36
+
+#define LED_CTRL_MODE_LAST_MODE     LED_CTRL_MODE_PARTY_MUSIC_3
 
 #define LED_CHANNEL_1 0
 #define LED_CHANNEL_2 1
@@ -51,7 +50,7 @@ class controller
     uint8_t getMode();
     void setAnimationDelay(uint16_t _tp);
     void setLedColor(uint32_t _c);
-    void clearLeds();
+    void clearLeds(uint8_t _show = 1);
     void setState(uint8_t _enable);
     uint8_t getState();
     void setAutoChange(uint8_t _autoChange);
