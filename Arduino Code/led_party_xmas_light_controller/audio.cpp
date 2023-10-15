@@ -11,7 +11,7 @@ void audio::initAudio()
     bufferTail = 0;
     bufferHead = 0;
     ADMUX = 0;
-    ADMUX |= 0b01000110; // ADC6
+    ADMUX |= 0b00000110; // ADC6
 
     ADCSRA = 0;
     ADCSRA |= (1 << ADEN) | (1 << ADIE) | (1 << ADIF) | (1 << ADATE) | 0b00000110;
