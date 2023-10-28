@@ -554,6 +554,8 @@ void GUI::checkLimits(int8_t _min, int8_t _max, int8_t *_var)
         *_var = _max;
 }
 
+// Checks if the relay or LEDs needs to be turend off or on.
+// This part is written with the little help from the ladyM9 (https://github.com/ladyM9). Thank you! :)
 void GUI::checkActiveTime(pcf85063 &rtc)
 {
     struct tm _currentTime = rtc.epochToHuman(rtc.getClock());
