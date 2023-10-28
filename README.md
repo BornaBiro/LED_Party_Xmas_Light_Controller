@@ -2,9 +2,15 @@
 
 ATMGEA328P based project for ccontrolling WS2801 RGB LEDs (addressable LEDs with dedicated IC controller, not the ones with built-in controller). It's primarlly used for controlling LED lights for Xmass, but with some code modification can be used for smart ambient light or even a party light (it already has dedicated mode for that, but it does not work properly, more about that later).
 
-![finished_device1](https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img1.jpg) ![finished_device2](https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img4.jpg)
+<p align="center">
+  <img width="600" src=https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img1.jpg>
+</p>
 
-### Features
+<p align="center">
+  <img width="600" src=https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img4.jpg>
+</p>
+
+## Features
 - microUSB supply
 - DC Jack supply (microUSB and DC Jack **CAN'T** be used at the same time!)
 - Terminal block for power supply (connected in parallel with DC Jack)
@@ -22,7 +28,7 @@ ATMGEA328P based project for ccontrolling WS2801 RGB LEDs (addressable LEDs with
 - Addidional pushbutton
 - easyC / STEMMA / Qwiic I2C connector for additional I2C devices 
 
-### Getting started
+## Getting started
 1. Get the board!
 2. Get the parts!
 3. Solder everything together (except DC-DC converter, **you must set the output voltage to 5V-5.2V first**)
@@ -35,11 +41,19 @@ ATMGEA328P based project for ccontrolling WS2801 RGB LEDs (addressable LEDs with
 10. Upload the sketch
 11. Have fun!
 
-### Hadrware issues
-**NOTE** Before making the CB you have to know that current version of the PCB has _some_ hardware issues. All issues are listed [here](https://github.com/BornaBiro/LED_Party_Xmas_Light_Controller/tree/dev/PCB#hadrware-issues). 
-**NOTE** I did not fix any of these on PCB design, so like I mentioned, you will either need to do these fixes or you will need to make changes on the PCB before you order it.
+## Contributions to this project
+[ladyM9](https://github.com/ladyM9) - Little help for the timer code (got few ideas on how to approach the problem). Thank you!
 
-### Software issues
+## Hadrware issues
+⚠️**NOTE**⚠️
+
+Before making the CB you have to know that current version of the PCB has _some_ hardware issues. All issues are listed [here](https://github.com/BornaBiro/LED_Party_Xmas_Light_Controller/tree/dev/PCB#hadrware-issues).
+
+⚠️**NOTE**⚠️
+
+I did not fix any of these on PCB design, so like I mentioned, you will either need to do these fixes or you will need to make changes on the PCB before you order it.
+
+## Software issues
 Software is still in the progress of make it. Since I do not have much free time, do not have high hopes on fixing these. I'll try my best to fix these before Xmas and New Year.
 Whole code is written to be non-blocking.
 
@@ -49,17 +63,19 @@ Known issues:
 3. Be careful while setting up current Xmas mode, because you can force it into party mode by incrementing it to the Moon and beyond. Not sure if this is a bug or feature.
 4. No day selecton on automatic on or off (no date setting either)
 
-### How to use it
+## How to use it
 [will be written, be patient!]
 
-### Few more images
-![finished_device3](https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img2.jpg)
+## Few more images
 
-![finished_device4](https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img3.jpg)
+<p align="center">
+  <img width="600" src=https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img2.jpg>
+</p>
 
-### Licence
+<p align="center">
+  <img width="600" src=https://raw.githubusercontent.com/BornaBiro/LED_Party_Xmas_Light_Controller/dev/extras/Images/img3.jpg>
+</p>
+
+## Licence
 This project uses MIT licence. It is provided as is - no warranty is given. In other words - use it at your own risk.
 You can use this project, change it, modify it, but source must be listed (this github repo)!
-
-## Contributions
-[ladyM9](https://github.com/ladyM9) - Little help for the timer code (got few ideas on how to approach the problem). Thank you!
