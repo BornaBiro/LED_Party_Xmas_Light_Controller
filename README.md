@@ -26,7 +26,9 @@ ATMGEA328P based project for ccontrolling WS2801 RGB LEDs (addressable LEDs with
 - CH340 USB to UART IC for easy programming and debugging
 - Reset pushbutton
 - Addidional pushbutton
-- easyC / STEMMA / Qwiic I2C connector for additional I2C devices 
+- easyC / STEMMA / Qwiic I2C connector for additional I2C devices
+
+There is very neat little feature with this device: it creates same melodies as these old school incandescent Xmas lights. Check that out [here](https://github.com/BornaBiro/LED_Party_Xmas_Light_Controller/blob/dev/Codes/Melody%20Extract/README.md).
 
 ## Getting started
 1. Get the board!
