@@ -17,7 +17,7 @@
 #include "melody.h"
 
 // Yuck...
-extern ledModeHandleTypedef modeList[10];
+extern ledModeHandleTypedef modeList[12];
 
 // Class for the LED controller
 class LedCtrl
@@ -56,6 +56,10 @@ class LedCtrl
 
         uint8_t getMelodyStatus();
 
+        void setAutomaticChange(uint8_t _autoModeChange);
+
+        uint8_t getAutomaticChange();
+
     private:
         void initIOPins();
 
@@ -91,6 +95,10 @@ class LedCtrl
 
         // Offset variable for the pattern speed change.
         int8_t _speedOffset = 0;
+
+        // Automatic mode update flag variable.
+        // By default, update the mode automatically.
+        uint8_t _automaticModeUpdate = 1;
 
         // Pointer array to the Adafruit WS2801 LED library.
         Adafruit_WS2801 *_ledObjectArray[3];

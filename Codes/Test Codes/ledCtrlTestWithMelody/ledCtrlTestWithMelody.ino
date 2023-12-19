@@ -1,7 +1,8 @@
 #include "ledController.h"
 #include "melodies.h"
 
-Adafruit_WS2801 led(30, 4, 5);
+Adafruit_WS2801 ledCh1(20, 4, 5);
+Adafruit_WS2801 ledCh2(30, 6, 7);
 LedCtrl ledCtrl;
 Melody melody;
 
@@ -15,9 +16,10 @@ void setup()
     randomSeed(analogRead(A6));
 
     melody.begin(A3, (uint16_t*)currentMelodyNotes, (uint16_t*)currentMelodyDurations, (uint8_t*)melodyElements, sizeof(melodyElements) / sizeof(melodyElements[0]));
-    ledCtrl.begin(&led, NULL, NULL, &melody);
+    ledCtrl.begin(&ledCh1, &ledCh2, NULL, &melody);
 
-    //ledCtrl.setMode(5);
+    ledCtrl.setMode(11);
+    //ledCtrl.setAutomaticChange(0);
 }
 
 void loop()

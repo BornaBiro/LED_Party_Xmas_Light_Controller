@@ -85,8 +85,8 @@ uint8_t LedCtrl::update()
         }
     }
 
-    // Otherwise, check if the whole mode needs to be changed.
-    if ((unsigned long)(millis() - _modeTimeoutTimer) >= _modeTimeout)
+    // Otherwise, check if the whole mode needs to be changed (but only if automatic mode change is enabled).
+    if (((unsigned long)(millis() - _modeTimeoutTimer) >= _modeTimeout) && _automaticModeUpdate)
     {
         // Capture the new time.
         _modeTimeoutTimer = millis();
@@ -211,7 +211,6 @@ char* LedCtrl::getCurrentModeName()
 {
     // Return the chart that holds the name of the current mode (but check if the ponter if not null).
     // In that case, return generic string.
-
     char *_modeName = modeList[_currentLEDMode].name;
 
     if (_modeName == NULL)
@@ -271,12 +270,20 @@ uint8_t LedCtrl::getMelodyStatus()
 
 void LedCtrl::setAutomaticChange(uint8_t _autoModeChange)
 {
-    // TODO...
+    // Limit to only LSB.
+    _autoModeChange &= 1;
+
+    // Store it locally.
+    _automaticModeUpdate = _autoModeChange;
+
+    // Check if is set to automatic change. In that case, capture the time!
+    if (_automaticModeUpdate) _modeTimeoutTimer = millis();
 }
 
 uint8_t LedCtrl::getAutomaticChange()
 {
-    // TODO...
+    // Read the variable.
+    return _automaticModeUpdate;
 }
 
 // Private

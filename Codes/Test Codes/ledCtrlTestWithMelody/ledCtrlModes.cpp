@@ -98,32 +98,6 @@ void ledPatternStatic6(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
 
 void ledPatternFunction1(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
 {
-    uint32_t _colorFill;
-    
-    switch (_handle->animationPhase % 3)
-    {
-        case 0:
-            _colorFill = 0xFF0000;
-            break;
-        
-        case 1:
-            _colorFill = 0x00FF00;
-            break;
-
-        case 2:
-            _colorFill = 0x0000FF;
-            break;
-    }
-
-    for (int i = 0; i < _led->numPixels(); i++)
-    {
-        _led->setPixelColor(i, _colorFill);
-    }
-    _led->show();
-}
-
-void ledPatternFunction2(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
-{
     uint8_t _shift = _handle->animationPhase & 1;
 
     for (int i = _shift; i < _led->numPixels(); i+=2)
@@ -138,6 +112,63 @@ void ledPatternFunction2(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+void ledPatternFunction2(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
+{
+    uint8_t _shift = _handle->animationPhase & 1;
+
+    // Turn off all LEDs.
+    for (int i = 0; i < _led->numPixels(); i++)
+    {
+        _led->setPixelColor(i, 0x000000);
+    }
+
+    // Turn on or green and blue LEDs or red and yellow (orange) LEDs.
+    for (int i = _shift; i < _led->numPixels(); i+=4)
+    {
+        if (_shift == 0)
+        {
+            _led->setPixelColor(i, rgbTo24Bit(red[COLOR_GREEN], green[COLOR_GREEN], blue[COLOR_GREEN]));
+            _led->setPixelColor(i + 2, rgbTo24Bit(red[COLOR_BLUE], green[COLOR_BLUE], blue[COLOR_BLUE]));
+        }
+        else
+        {
+            _led->setPixelColor(i, rgbTo24Bit(red[COLOR_RED], green[COLOR_RED], blue[COLOR_RED]));
+            _led->setPixelColor(i + 2, rgbTo24Bit(red[COLOR_ORANGE], green[COLOR_ORANGE], blue[COLOR_ORANGE]));
+        }
+    }
+
+    _led->show();
+}
+
+void ledPatternFunction3(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
+{
+    // Display LEDs in old school xmas light colors.
+    for (int i = 0; i < _led->numPixels(); i++)
+    {
+        // In every new step, move them around.
+        uint8_t _index = (i + _handle->animationPhase) % 5;
+
+        // Send the new color for every LEDs.
+        _led->setPixelColor(i, rgbTo24Bit(oldColors[_index][0], oldColors[_index][1], oldColors[_index][2]));
+    }
+    _led->show();
+}
+
+void ledPatternFunction4(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
+{
+    // Get the color for all LEDs using hue.
+    uint32_t _color = ColorHSV(_handle->animationPhase << 8, 255, 255);
+
+    // Send the new color to the all LEDs.
+    for (int i = 0; i < _led->numPixels(); i++)
+    {
+        _led->setPixelColor(i, _color);
+    }
+
+    // Send the color to the LEDs.
+    _led->show();
+}
+
 ledModeHandleTypedef modeList[] = 
 {
     {
@@ -146,7 +177,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 0,
-        .name = "Stat Rnd"
+        .name = "Sta Rnd"
     },
     {
         .animation = 0,
@@ -154,7 +185,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 0,
-        .name = "Stat WW"
+        .name = "Sta WW"
     },
     {
         .animation = 0,
@@ -162,7 +193,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 0,
-        .name = "Stat CW"
+        .name = "Sta CW"
     },
     {
         .animation = 0,
@@ -170,7 +201,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 0,
-        .name = "Stat WW&CW"
+        .name = "Sta WW&CW"
     },
     {
         .animation = 0,
@@ -178,7 +209,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 0,
-        .name = "Stat Old"
+        .name = "Sta Old"
     },
     {
         .animation = 0,
@@ -186,15 +217,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 0,
-        .name = "Stat Xmas"
-    },
-    {
-        .animation = 1,
-        .animationPhase = 0,
-        .maxAnimationsPhases = 3,
-        .melody = 0,
-        .animationFrameDelay = 1000,
-        .name = "Mode 1"
+        .name = "Sta Xmas"
     },
     {
         .animation = 1,
@@ -202,7 +225,7 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 0,
         .animationFrameDelay = 1000,
-        .name = "Mode 2"
+        .name = "Dyn Xmas"
     },
     {
         .animation = 1,
@@ -210,11 +233,43 @@ ledModeHandleTypedef modeList[] =
         .maxAnimationsPhases = 0,
         .melody = 1,
         .animationFrameDelay = 1000,
-        .name = "Mode 2 with melody"
+        .name = "Dyn Xmas mel."
+    },
+    {
+        .animation = 1,
+        .animationPhase = 0,
+        .maxAnimationsPhases = 0,
+        .melody = 0,
+        .animationFrameDelay = 1000,
+        .name = "Dyn Old"
+    },
+    {
+        .animation = 1,
+        .animationPhase = 0,
+        .maxAnimationsPhases = 0,
+        .melody = 1,
+        .animationFrameDelay = 1000,
+        .name = "Dyn Old Mel"
+    },
+    {
+        .animation = 1,
+        .animationPhase = 0,
+        .maxAnimationsPhases = 0,
+        .melody = 0,
+        .animationFrameDelay = 1000,
+        .name = "Dyn Old Xmas"
+    },
+    {
+        .animation = 1,
+        .animationPhase = 0,
+        .maxAnimationsPhases = 255,
+        .melody = 0,
+        .animationFrameDelay = 200,
+        .name = "Dyn C Wheel"
     },
 };
 
-// Ugh... Arduino does not support struct init with the pointer function, so I need to it this way.
+// Ugh... Arduino does not support struct init with the pointer function, so I need to do it this way.
 void initFunctionPointers()
 {
     // Add your functions to the list here.
@@ -225,10 +280,14 @@ void initFunctionPointers()
     modeList[4].animationFunction = &ledPatternStatic5;
     modeList[5].animationFunction = &ledPatternStatic6;
     modeList[6].animationFunction = &ledPatternFunction1;
-    modeList[7].animationFunction = &ledPatternFunction2;
+    modeList[7].animationFunction = &ledPatternFunction1;
     modeList[8].animationFunction = &ledPatternFunction2;
+    modeList[9].animationFunction = &ledPatternFunction2;
+    modeList[10].animationFunction = &ledPatternFunction3;
+    modeList[11].animationFunction = &ledPatternFunction4;
 }
 
+// Helper function for LEDs.
 uint32_t rgbTo24Bit(uint8_t _r, uint8_t _g, uint8_t _b)
 {
     uint32_t _color24;
@@ -238,4 +297,97 @@ uint32_t rgbTo24Bit(uint8_t _r, uint8_t _g, uint8_t _b)
     _color24 <<= 8;
     _color24 |= _b;
     return _color24;
+}
+
+// Thanks Adafruit, you save me a lot of time (and headache)!
+uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val)
+{
+
+    uint8_t r, g, b;
+
+    // Remap 0-65535 to 0-1529. Pure red is CENTERED on the 64K rollover;
+    // 0 is not the start of pure red, but the midpoint...a few values above
+    // zero and a few below 65536 all yield pure red (similarly, 32768 is the
+    // midpoint, not start, of pure cyan). The 8-bit RGB hexcone (256 values
+    // each for red, green, blue) really only allows for 1530 distinct hues
+    // (not 1536, more on that below), but the full unsigned 16-bit type was
+    // chosen for hue so that one's code can easily handle a contiguous color
+    // wheel by allowing hue to roll over in either direction.
+    hue = (hue * 1530L + 32768) / 65536;
+    // Because red is centered on the rollover point (the +32768 above,
+    // essentially a fixed-point +0.5), the above actually yields 0 to 1530,
+    // where 0 and 1530 would yield the same thing. Rather than apply a
+    // costly modulo operator, 1530 is handled as a special case below.
+
+    // So you'd think that the color "hexcone" (the thing that ramps from
+    // pure red, to pure yellow, to pure green and so forth back to red,
+    // yielding six slices), and with each color component having 256
+    // possible values (0-255), might have 1536 possible items (6*256),
+    // but in reality there's 1530. This is because the last element in
+    // each 256-element slice is equal to the first element of the next
+    // slice, and keeping those in there this would create small
+    // discontinuities in the color wheel. So the last element of each
+    // slice is dropped...we regard only elements 0-254, with item 255
+    // being picked up as element 0 of the next slice. Like this:
+    // Red to not-quite-pure-yellow is:        255,   0, 0 to 255, 254,   0
+    // Pure yellow to not-quite-pure-green is: 255, 255, 0 to   1, 255,   0
+    // Pure green to not-quite-pure-cyan is:     0, 255, 0 to   0, 255, 254
+    // and so forth. Hence, 1530 distinct hues (0 to 1529), and hence why
+    // the constants below are not the multiples of 256 you might expect.
+
+    // Convert hue to R,G,B (nested ifs faster than divide+mod+switch):
+    if (hue < 510)
+    { // Red to Green-1
+        b = 0;
+        if (hue < 255)
+        { //   Red to Yellow-1
+            r = 255;
+            g = hue; //     g = 0 to 254
+        }
+        else
+        {                  //   Yellow to Green-1
+            r = 510 - hue; //     r = 255 to 1
+            g = 255;
+        }
+    }
+    else if (hue < 1020)
+    { // Green to Blue-1
+        r = 0;
+        if (hue < 765)
+        { //   Green to Cyan-1
+            g = 255;
+            b = hue - 510; //     b = 0 to 254
+        }
+        else
+        {                   //   Cyan to Blue-1
+            g = 1020 - hue; //     g = 255 to 1
+            b = 255;
+        }
+    }
+    else if (hue < 1530)
+    { // Blue to Red-1
+        g = 0;
+        if (hue < 1275)
+        {                   //   Blue to Magenta-1
+            r = hue - 1020; //     r = 0 to 254
+            b = 255;
+        }
+        else
+        { //   Magenta to Red-1
+            r = 255;
+            b = 1530 - hue; //     b = 255 to 1
+        }
+    }
+    else
+    { // Last 0.5 Red (quicker than % operator)
+        r = 255;
+        g = b = 0;
+    }
+
+    // Apply saturation and value to R,G,B, pack into 32-bit result:
+    uint32_t v1 = 1 + val;  // 1 to 256; allows >>8 instead of /255
+    uint16_t s1 = 1 + sat;  // 1 to 256; same reason
+    uint8_t s2 = 255 - sat; // 255 to 0
+    return ((((((r * s1) >> 8) + s2) * v1) & 0xff00) << 8) | (((((g * s1) >> 8) + s2) * v1) & 0xff00) |
+           (((((b * s1) >> 8) + s2) * v1) >> 8);
 }
