@@ -432,8 +432,9 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
     }
     case 2: {
         lcd.print("Current setting");
-        lcd.setCursor(0, 1);
+        lcd.setCursor(1, 1);
         lcd.print(_myCtrl->getCurrentModeName());
+        drawItemSelector(lcd, _menuCursor);
         break;
     }
     case 3: {
