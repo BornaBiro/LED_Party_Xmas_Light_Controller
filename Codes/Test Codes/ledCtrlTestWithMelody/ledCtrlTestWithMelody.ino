@@ -18,7 +18,7 @@ void setup()
     melody.begin(A3, (uint16_t*)currentMelodyNotes, (uint16_t*)currentMelodyDurations, (uint8_t*)melodyElements, sizeof(melodyElements) / sizeof(melodyElements[0]));
     ledCtrl.begin(&ledCh1, &ledCh2, NULL, &melody);
 
-    ledCtrl.setMode(11);
+    ledCtrl.setMode(12);
     //ledCtrl.setAutomaticChange(0);
 }
 

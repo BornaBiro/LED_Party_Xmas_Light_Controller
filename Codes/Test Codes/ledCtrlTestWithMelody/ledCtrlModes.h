@@ -16,4 +16,7 @@ uint32_t rgbTo24Bit(uint8_t _r, uint8_t _g, uint8_t _b);
 // Convert Hue, Saturation and Value (brightness) to RGB values. Again, thanks Adafruit!
 uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val);
 
+// Helper function that converts RGB value into HSV. Thanks ChatGPT!
+void RGBToHSV(uint32_t _rgb, uint16_t *h, uint8_t *s, uint8_t *v);
+
 #endif

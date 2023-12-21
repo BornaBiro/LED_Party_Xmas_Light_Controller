@@ -17,7 +17,7 @@
 #include "melody.h"
 
 // Yuck...
-extern ledModeHandleTypedef modeList[12];
+extern ledModeHandleTypedef modeList[13];
 
 // Class for the LED controller
 class LedCtrl

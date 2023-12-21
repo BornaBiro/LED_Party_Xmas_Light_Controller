@@ -96,6 +96,7 @@ void ledPatternStatic6(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+// Animation pattern in which LED color pattern is green, red, green, red.
 void ledPatternFunction1(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
 {
     uint8_t _shift = _handle->animationPhase & 1;
@@ -112,6 +113,8 @@ void ledPatternFunction1(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+// LED pattern where LEDs are in green, red, blue and yellow color,
+// but only green and blue or red and yellow are active at the same time.
 void ledPatternFunction2(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
 {
     uint8_t _shift = _handle->animationPhase & 1;
@@ -140,6 +143,7 @@ void ledPatternFunction2(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+// Old school xmas lights color but the colors are "moving".
 void ledPatternFunction3(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
 {
     // Display LEDs in old school xmas light colors.
@@ -154,6 +158,7 @@ void ledPatternFunction3(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+// Simple color wipe with a color wheel effect.
 void ledPatternFunction4(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
 {
     // Get the color for all LEDs using hue.
@@ -169,6 +174,71 @@ void ledPatternFunction4(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+void ledPatternFunction5(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
+{
+    // At the first phase, fill the LEDs with defined color.
+    const uint16_t _hue = 5280;
+    const uint8_t _sat = 244;
+    const uint8_t _val = 127;
+
+    if (_handle->animationPhase == 0)
+    {
+        for (int i = 0; i < _led->numPixels(); i++)
+        {
+            _led->setPixelColor(i, ColorHSV(_hue, _sat, _val));
+        }
+    }
+    else
+    {
+        // If the phase is divisable by 10, generate bright LED at random position.
+        if (_handle->animationPhase % 10)
+        {
+            // Generate random LED position.
+            int _ledPos = random(0, _led->numPixels());
+
+            // Generate random brightness offset.
+            int _brightnessOffset = random(-75, 75);
+
+            // Set higher brightness
+            _led->setPixelColor(_ledPos, ColorHSV(_hue, _sat, _val + _brightnessOffset));
+        }
+        else
+        {
+            // Go trough the loop and check if the current LED HSV brightness is 127.
+            // If not, increment it or decrement it until is 127.
+            for (int i = 0; i < _led->numPixels(); i++)
+            {
+                // Get the pixel HSV value.
+                uint16_t _h;
+                uint8_t _s;
+                uint8_t _v;
+                RGBToHSV(_led->getPixelColor(i), &_h, &_s, &_v);
+
+                // Check if the value is corrent.
+                if (_v != _val)
+                {
+                    // Check the direction of the increment.
+                    if (_v > _val)
+                    {
+                        _v--;
+                    }
+                    else
+                    {
+                        _v++;
+                    }
+
+                    // Update the LED HSV.
+                    _led->setPixelColor(i, ColorHSV(_hue, _sat, _v));
+                }
+            }
+        }
+    }
+
+    // Send the color to the LEDs.
+    _led->show();
+}
+
+// Array with all supported modes and their definitions.
 ledModeHandleTypedef modeList[] = 
 {
     {
@@ -267,6 +337,14 @@ ledModeHandleTypedef modeList[] =
         .animationFrameDelay = 200,
         .name = "Dyn C Wheel"
     },
+    {
+        .animation = 1,
+        .animationPhase = 0,
+        .maxAnimationsPhases = 0,
+        .melody = 0,
+        .animationFrameDelay = 75,
+        .name = "Dyn Candle"
+    },
 };
 
 // Ugh... Arduino does not support struct init with the pointer function, so I need to do it this way.
@@ -285,6 +363,7 @@ void initFunctionPointers()
     modeList[9].animationFunction = &ledPatternFunction2;
     modeList[10].animationFunction = &ledPatternFunction3;
     modeList[11].animationFunction = &ledPatternFunction4;
+    modeList[12].animationFunction = &ledPatternFunction5;
 }
 
 // Helper function for LEDs.
@@ -390,4 +469,48 @@ uint32_t ColorHSV(uint16_t hue, uint8_t sat, uint8_t val)
     uint8_t s2 = 255 - sat; // 255 to 0
     return ((((((r * s1) >> 8) + s2) * v1) & 0xff00) << 8) | (((((g * s1) >> 8) + s2) * v1) & 0xff00) |
            (((((b * s1) >> 8) + s2) * v1) >> 8);
+}
+
+// Helper function that converts RGB value into HSV. Thanks ChatGPT!
+void RGBToHSV(uint32_t _rgb, uint16_t *h, uint8_t *s, uint8_t *v)
+{
+    // Extract R, G, and B components from the 24-bit RGB value
+    uint8_t r = (_rgb >> 16) & 0xFF;  // Extract R component
+    uint8_t g = (_rgb >> 8) & 0xFF;   // Extract G component
+    uint8_t b = _rgb & 0xFF;          // Extract B component
+
+    double red = r / 255.0;
+    double green = g / 255.0;
+    double blue = b / 255.0;
+
+    double cmax = fmax(red, fmax(green, blue));
+    double cmin = fmin(red, fmin(green, blue));
+    double delta = cmax - cmin;
+
+    double hue = 0, saturation = 0, value = 0;
+
+    // Calculate Hue
+    if (delta == 0)
+        hue = 0;
+    else if (cmax == red)
+        hue = 60 * fmod(((green - blue) / delta), 6);
+    else if (cmax == green)
+        hue = 60 * (((blue - red) / delta) + 2);
+    else
+        hue = 60 * (((red - green) / delta) + 4);
+
+    if (hue < 0) hue += 360;
+
+    // Calculate Saturation
+    if (cmax == 0)
+        saturation = 0;
+    else
+        saturation = (delta / cmax) * 255;
+
+    // Calculate Value
+    value = cmax * 255;
+
+    *h = (uint16_t)hue;
+    *s = (uint8_t)saturation;
+    *v = (uint8_t)value;
 }
