@@ -16,6 +16,9 @@ class Melody
         void stop();
         void setTempoOffset(int8_t _offset);
         int8_t getTempoOffset();
+        void setMute(uint8_t _mute);
+        uint8_t getMute();
+        uint8_t isPlaying();
 
     private:
         uint8_t _currentSongElement = 0;
@@ -26,6 +29,9 @@ class Melody
         uint8_t _noteState = 0;
         int8_t _tempoOffset = 0;
         uint16_t _currentNoteDuration = 0;
+
+        // Disable mute by default.
+        uint8_t _muteStatus = 0;
 
         uint16_t *_notesInternalArray = NULL;
         uint16_t *_durationsInternalArray = NULL;

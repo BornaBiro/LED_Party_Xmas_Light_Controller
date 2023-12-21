@@ -61,12 +61,6 @@ struct deviceSettings
     struct timerTime activationTimes[3];
 };
 
-struct ledControllerHandle
-{
-    uint8_t animation;
-    
-};
-
 const char stringEnabled[] = "Enabled";
 const char stringDisabled[] = "Disabled";
 

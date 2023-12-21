@@ -4,7 +4,7 @@ GUI::GUI()
 {
 }
 
-void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
+void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, LedCtrl *_ctrl)
 {
     // Copy the conntroller object pointer. -> TODO: Use references!
     _myCtrl = _ctrl;
@@ -41,10 +41,19 @@ void GUI::init(LiquidCrystal_I2C &lcd, pcf85063 &rtc, controller *_ctrl)
         EEPROM.put(GUI_EEPROM_ADDR_MODE, _key);
     }
     // Set-up an LED controller.
-    _myCtrl->setState(settings.autoStartLeds & 1);
-    _myCtrl->setMode(LED_CTRL_MODE_STATIC_1, (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
-    _myCtrl->setAutoChange(settings.autoChange);
-    _myCtrl->setMelody(settings.melody);
+    if (settings.autoStartLeds & 1)
+    {
+        _myCtrl->enable();
+    }
+    else
+    {
+        _myCtrl->disable();
+    }
+    _myCtrl->setMode(0);
+    _myCtrl->setPatternDelay((unsigned long)(settings.animationDuration) * 1000);
+    _myCtrl->speedChange(settings.animationDelay);
+    _myCtrl->setAutomaticChange(settings.autoChange);
+    _myCtrl->enableMelody(settings.melody);
 
     // Show the main screen.
     mainScreen(lcd, rtc, rtc.getClock());
@@ -100,7 +109,7 @@ void GUI::mainScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc, time_t _myEpoch)
 
     // Write the selected mode.
     lcd.setCursor(0, 1);
-    lcd.print(getModeName(_myCtrl->getMode(), lcdBuffer));
+    lcd.print(_myCtrl->getCurrentModeName());
 }
 
 uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
@@ -159,7 +168,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
         if (_currentItem == 1)
         {
             _menuCursor = 0;
-            _myCtrl->setMode(_myCtrl->getMode() + _enc, (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
+            _myCtrl->setMode(_myCtrl->getMode() + _enc);
         }
         updateNeeded = 1;
         break;
@@ -176,13 +185,13 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
         {
             _menuCursor = 0;
             settings.animationDelay += _enc;
-            if (settings.animationDelay > 600)
-                settings.animationDelay = 1;
-            if (settings.animationDelay < 1)
-                settings.animationDelay = 600;
+            if (settings.animationDelay > 99)
+                settings.animationDelay = 99;
+            if (settings.animationDelay < -99)
+                settings.animationDelay = 99;
 
             EEPROM.put(GUI_EEPROM_ADDR_ANIM_DELAY, settings.animationDelay);
-            _myCtrl->setAnimationDelay(settings.animationDelay * 10);
+            _myCtrl->speedChange(settings.animationDelay);
         }
         updateNeeded = 1;
         break;
@@ -205,7 +214,9 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
                 settings.animationDuration = 500;
 
             EEPROM.put(GUI_EEPROM_ADDR_ANIM_DUR, settings.animationDuration);
-            _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
+
+            // Set how long one animaton should last in milliseconds.
+            _myCtrl->setPatternDelay(settings.animationDuration * 1000ULL);
         }
         updateNeeded = 1;
         break;
@@ -223,8 +234,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             settings.autoChange += _enc;
             settings.autoChange &= 1;
             EEPROM.put(GUI_EEPROM_ADDR_AUTO_CHANGE, settings.autoChange);
-            _myCtrl->setAutoChange(settings.autoChange);
-            if (settings.autoChange) _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
+            _myCtrl->setAutomaticChange(settings.autoChange);
         }
         updateNeeded = 1;
         break;
@@ -243,7 +253,7 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             settings.melody += _enc;
             settings.melody &= 1;
             EEPROM.put(GUI_EEPROM_ADDR_MELODY_EN, settings.melody);
-            _myCtrl->setMelody(settings.melody);
+            _myCtrl->enableMelody(settings.melody);
         }
         updateNeeded = 1;
         break;
@@ -264,14 +274,13 @@ uint8_t GUI::updateMenu(int _enc, int _encSw, int _sw, pcf85063 &rtc)
             EEPROM.put(GUI_EEPROM_ADDR_AUTOSTART_LED, settings.autoStartLeds);
             updateNeeded = 1;
 
-            _myCtrl->setState(settings.autoStartLeds);
-            if (!settings.autoStartLeds)
+            if (settings.autoStartLeds)
             {
-                _myCtrl->clearLeds();
+                _myCtrl->enable();
             }
-            if (settings.autoStartLeds == 1)
+            else
             {
-                _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
+                _myCtrl->disable();
             }
             // if (settings.autoStartLeds == 2)
             // {
@@ -422,13 +431,14 @@ void GUI::settingsScreen(LiquidCrystal_I2C &lcd, pcf85063 &rtc)
         break;
     }
     case 2: {
-        getModeName(_myCtrl->getMode(), lcdBuffer);
-        drawSetting(lcd, "Current setting", lcdBuffer, 1, _menuCursor);
+        lcd.print("Current setting");
+        lcd.setCursor(0, 1);
+        lcd.print(_myCtrl->getCurrentModeName());
         break;
     }
     case 3: {
-        sprintf(lcdBuffer, "%4d msec", settings.animationDelay * 10);
-        drawSetting(lcd, "Animation delay", lcdBuffer, 1, _menuCursor);
+        sprintf(lcdBuffer, "%4d %%", settings.animationDelay);
+        drawSetting(lcd, "Frame speed", lcdBuffer, 1, _menuCursor);
         break;
     }
     case 4: {
@@ -512,31 +522,6 @@ void GUI::displayOn(LiquidCrystal_I2C &lcd)
     }
 }
 
-char *GUI::getModeName(uint8_t _m, char *_s)
-{
-    if (_m >= LED_CTRL_MODE_STATIC_1 && _m <= LED_CTRL_MODE_STATIC_4)
-    {
-        sprintf(_s, "Xmas static %d", _m + 1);
-    }
-
-    if (_m >= LED_CTRL_MODE_XMAS_1 && _m <= LED_CTRL_MODE_XMAS_5)
-    {
-        sprintf(_s, "Xmas dynam. %d", _m - LED_CTRL_MODE_XMAS_1 + 1);
-    }
-
-    if (_m >= LED_CTRL_MODE_PARTY_1 && _m <= LED_CTRL_MODE_PARTY_2)
-    {
-        sprintf(_s, "Party. %d", _m - LED_CTRL_MODE_PARTY_1 + 1);
-    }
-
-    if (_m >= LED_CTRL_MODE_PARTY_MUSIC_1 && _m <= LED_CTRL_MODE_PARTY_MUSIC_3)
-    {
-        sprintf(_s, "Party dynam. %d", _m - LED_CTRL_MODE_PARTY_MUSIC_1 + 1);
-    }
-    return _s;
-}
-
-
 // Private functions
 void GUI::drawItemSelector(LiquidCrystal_I2C &lcd, int8_t _pos)
 {
@@ -619,8 +604,7 @@ void GUI::checkActiveTime(pcf85063 &rtc)
             // Check if the relay is not already on
             if (!_myCtrl->getState())
             {
-                _myCtrl->setState(1);
-                _myCtrl->setMode(_myCtrl->getMode(), (unsigned long)(settings.animationDuration) * 1000, (unsigned long)(settings.animationDelay) * 10);
+                _myCtrl->enable();
             }
         }
         else
@@ -628,8 +612,7 @@ void GUI::checkActiveTime(pcf85063 &rtc)
             // If relay do not need to be turned on, keep it off. But first check if the relay is not already off.
             if (_myCtrl->getState())
             {
-                _myCtrl->setState(0);
-                _myCtrl->clearLeds();
+                _myCtrl->disable();
             }
         }
     }

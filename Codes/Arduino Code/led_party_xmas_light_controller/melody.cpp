@@ -53,7 +53,7 @@ void Melody::play()
     _noteTimer = millis();
 
     // Generate a first note.
-    tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
+    if (!_muteStatus) tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
 
     // Set flag for status of the melody player.
     _playing = 1;
@@ -95,7 +95,7 @@ uint8_t Melody::update()
         else
         {
             // Play the note.
-            tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
+            if (!_muteStatus) tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
         }
 
         // Get the current note duration (delay). Also calculate the tempo offset.
@@ -127,7 +127,7 @@ void Melody::next()
     _noteTimer = millis();
 
     // Generate the new note.
-    tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
+    if (!_muteStatus) tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
 
     // Get the current note duration (delay). Also calculate the tempo offset.
     _currentNoteDuration = (uint16_t)(((uint16_t)pgm_read_word((uint16_t*)_durationsInternalArray[_currentSong] + _currentSongElement)) * (1 + _tempoOffset / 100.0));
@@ -157,7 +157,7 @@ void Melody::prev()
     _noteTimer = millis();
 
     // Generate the new note.
-    tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
+    if (!_muteStatus) tone(_buzzerPin, pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + _currentSongElement));
 
     // Get the current note duration (delay). Also calculate the tempo offset.
     _currentNoteDuration = (uint16_t)(((uint16_t)pgm_read_word((uint16_t*)_durationsInternalArray[_currentSong] + _currentSongElement)) * (1 + _tempoOffset / 100.0));
@@ -190,4 +190,28 @@ void Melody::setTempoOffset(int8_t _offset)
 int8_t Melody::getTempoOffset()
 {
     return -_tempoOffset;
+}
+
+void Melody::setMute(uint8_t _mute)
+{
+    // Mute can only be enablec or disabled.
+    _mute &= 1;
+
+    // Store it into internal variable.
+    _muteStatus = _mute;
+
+    // If mute is enabled, stop any ongoing sound.
+    noTone(_buzzerPin);
+}
+
+uint8_t Melody::getMute()
+{
+    // Return the local variable.
+    return _muteStatus;
+}
+
+uint8_t Melody::isPlaying()
+{
+    // Return the local variable.
+    return _playing;
 }
