@@ -56,8 +56,8 @@ void setup()
     if (!rtc.isClockSet())
         rtc.setClock(1639266187);
     rtc.intOnSeconds(true);
-    rtc.setAlarm(rtc.getClock() + 15);
-    rtc.rtcInt(true);
+    //rtc.setAlarm(rtc.getClock() + 15);
+    //rtc.rtcInt(true);
 
     io.configPins();
     io.configRotaryEnc();    

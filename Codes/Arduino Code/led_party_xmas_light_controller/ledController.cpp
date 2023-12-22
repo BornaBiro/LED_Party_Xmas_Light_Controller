@@ -25,8 +25,8 @@ void LedCtrl::begin(Adafruit_WS2801 *_ledsCh1, Adafruit_WS2801 *_ledsCh2, Adafru
     // Set mode to the first mode.
     _currentLEDMode = 0;
 
-    // Enable the controller.
-    enable();
+    // Disable the controller.
+    disable();
 }
 
 uint8_t LedCtrl::update()
@@ -132,6 +132,9 @@ uint8_t LedCtrl::update()
 // Disable LED controller.
 void LedCtrl::disable()
 {
+    // If the LED controller is already disabled, return.
+    //if (!_enabled) return;
+
     // Set the mode variable to zero.
     _enabled = 0;
 
@@ -154,6 +157,9 @@ void LedCtrl::disable()
 
 void LedCtrl::enable()
 {
+    // If the LED controller is already on, return.
+    //if (_enabled) return;
+
     // Set enable / disable flag to 1 (enable).
     _enabled = 1;
 
@@ -200,6 +206,9 @@ void LedCtrl::setMode(int8_t _mode)
 {
     // Check if the mode is valid at all.
     if ((_mode >= _numberOfModes) || (_mode < 0)) return;
+
+    // Check if mode has changed. If the mode did not change, return.
+    if (_mode == _currentLEDMode) return;
 
     // Save it.
     _currentLEDMode = _mode;
