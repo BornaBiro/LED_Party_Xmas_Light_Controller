@@ -25,20 +25,6 @@ void Melody::begin(uint8_t _pin, uint16_t *_notes, uint16_t *_durations, uint8_t
 
     // Set the used pin as output (without it, generating melodies won't work!).
     pinMode(_buzzerPin, OUTPUT);
-
-
-    // Debug and testing data.
-    Serial.print("First note: ");
-    Serial.println((uint16_t)pgm_read_word((uint16_t*)_notesInternalArray[_currentSong] + 5), DEC);
-
-    Serial.print("First duration: ");
-    Serial.println((uint16_t)pgm_read_word((uint16_t*)_durationsInternalArray[_currentSong] + 5), DEC);
-
-    Serial.print("First melody elements: ");
-    Serial.println((uint8_t)pgm_read_byte((uint8_t*)_elementsInternalArray + 1), DEC);
-
-    Serial.print("Number of melodies: ");
-    Serial.println(_noSongs, DEC);
 }
 
 void Melody::play()

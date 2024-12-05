@@ -43,8 +43,9 @@ void setup()
     Wire.begin();
     Wire.setWireTimeout(25000, true);
 
-    lcd.begin();
+    lcd.begin(16, 2);
     lcd.clear();
+    lcd.backlight();
 
     // Init library for the melody contoller.
     melody.begin(BUZZER_PIN, (uint16_t*)currentMelodyNotes, (uint16_t*)currentMelodyDurations, (uint8_t*)melodyElements, sizeof(melodyElements) / sizeof(melodyElements[0]));

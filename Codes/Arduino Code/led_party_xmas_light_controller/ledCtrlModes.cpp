@@ -238,6 +238,48 @@ void ledPatternFunction5(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
     _led->show();
 }
 
+void ledPatternFunction6(Adafruit_WS2801 *_led, ledModeHandleTypedef *_handle)
+{
+    // At the first phase, fill the LEDs with defined color.
+    const uint16_t _hue = 5280;
+    const uint8_t _sat = 244;
+    const uint8_t _val = 127;
+
+    if (_handle->animationPhase == 0)
+    {
+        for (int i = 0; i < _led->numPixels(); i++)
+        {
+            _led->setPixelColor(i, ColorHSV(_hue, _sat, _val));
+        }
+        _handle->animationPhase++;
+    }
+    else
+    {
+        uint8_t _selectedLed = random(0, _led->numPixels());
+            uint16_t _h;
+            uint8_t _s;
+            uint8_t _v;
+            RGBToHSV(_led->getPixelColor(_selectedLed), &_h, &_s, &_v);
+
+            // Generate random brightness offset.
+            int _brightnessOffset = random(-50, 50);
+
+            int _newValue = _brightnessOffset + _v;
+            if (_newValue > 255) _newValue = 255;
+            if (_newValue < 25) _newValue = 25;
+
+            _led->setPixelColor(_selectedLed, ColorHSV(_hue, _sat, _newValue));
+        
+                _handle->animationPhase = 1;
+
+                _handle->animationFrameDelay = random(50, 500);
+        
+        }
+
+    // Send the color to the LEDs.
+    _led->show();
+}
+
 // Array with all supported modes and their definitions.
 ledModeHandleTypedef modeList[] = 
 {
@@ -345,6 +387,14 @@ ledModeHandleTypedef modeList[] =
         .animationFrameDelay = 75,
         .name = "Dyn Candle"
     },
+    {
+        .animation = 1,
+        .animationPhase = 0,
+        .maxAnimationsPhases = 0,
+        .melody = 0,
+        .animationFrameDelay = 50,
+        .name = "Dyn Candle 2"
+    },
 };
 
 // Ugh... Arduino does not support struct init with the pointer function, so I need to do it this way.
@@ -364,6 +414,7 @@ void initFunctionPointers()
     modeList[10].animationFunction = &ledPatternFunction3;
     modeList[11].animationFunction = &ledPatternFunction4;
     modeList[12].animationFunction = &ledPatternFunction5;
+    modeList[13].animationFunction = &ledPatternFunction6;
 }
 
 // Helper function for LEDs.
