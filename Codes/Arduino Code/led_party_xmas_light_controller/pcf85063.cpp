@@ -71,9 +71,6 @@ time_t pcf85063::getClock()
     _myTime.tm_mon = bcd2dec(regData[5] & 0x1f) - 1;
     _myTime.tm_year = bcd2dec(regData[6]) + 2000 - RTC_HUMAN_YEAR; // 1870 instead of 1900 because of stupid offsets
 
-    //char tmp[50];
-    //sprintf(tmp, "%d %d %d %d %d %d %d", bcd2dec(regData[4]  & 0x07), bcd2dec(regData[3]  & 0x3f), bcd2dec(regData[5]  & 0x1f), bcd2dec(regData[6]) + 2000, bcd2dec(regData[2]  & 0x7f), bcd2dec(regData[1]  & 0x7f), bcd2dec(regData[0] & 0x7f));
-    //Serial.println(tmp);
     return mktime(&_myTime);
 }
 
