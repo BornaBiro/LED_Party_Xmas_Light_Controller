@@ -44,7 +44,8 @@ There is very neat little feature with this device: it creates same melodies as 
 11. Have fun!
 
 ## Contributions to this project
-[ladyM9](https://github.com/ladyM9) - Little help for the timer code (got few ideas on how to approach the problem). Thank you!
+- [ladyM9](https://github.com/ladyM9) - Little help for the timer code (got few ideas on how to approach the problem). Thank you!
+- [keith204](https://www.thingiverse.com/keith204/designs) 3D Printed caps for the LEDs - https://www.thingiverse.com/thing:3331268
 
 ## Hadrware issues
 ⚠️**NOTE**⚠️
